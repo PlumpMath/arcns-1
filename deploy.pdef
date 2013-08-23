@@ -2,16 +2,14 @@
 
 from panda3d.core import *
 
-packager.setHost("http://localhost/arcns/")
+packager.setHost("http://localhost/arcns/packs/")
 
-"""
-class firstTestPack(package):
-    config(version="0.0")
-    module("test1.*")
-"""
+class arcns_mainscene_pack(package):
+    module("mainscene.*")
 
-class gameTest(p3d):
-    require("panda3d")
+class arcns(p3d):
+    require("panda3d","arcns_mainscene_pack")
+    file("config.prc")
     config(display_name="arcns")
-    #excludeModule("")
+    excludeModule("mainscene")
     mainModule("main")
