@@ -5,11 +5,15 @@ from panda3d.core import *
 packager.setHost("http://localhost/arcns/packs/")
 
 class arcns_mainscene_pack(package):
+    require("panda3d","morepy")
+    dir("mainscene/models")
     module("mainscene.*")
 
 class arcns(p3d):
     require("panda3d","arcns_mainscene_pack")
     file("config.prc")
+    file("misc/firstv2.ttf")
+    dir("models")
     config(display_name="arcns")
     excludeModule("mainscene")
     mainModule("main")
