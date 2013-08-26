@@ -9,11 +9,21 @@ class arcns_mainscene_pack(package):
     dir("mainscene/models")
     module("mainscene.*")
 
+class arcns_cinescene_pack(package):
+    require("panda3d","morepy")
+    module("cinescene.*")
+
+class arcns_gamescene_pack(package):
+    require("panda3d","morepy")
+    module("gamescene.*")
+
 class arcns(p3d):
-    require("panda3d","arcns_mainscene_pack")
+    require("panda3d","arcns_mainscene_pack","arcns_cinescene_pack","arcns_gamescene_pack")
     file("config.prc")
     file("misc/firstv2.ttf")
     dir("models")
     config(display_name="arcns")
     excludeModule("mainscene")
+    excludeModule("cinescene")
+    excludeModule("gamescene")
     mainModule("main")
