@@ -5,13 +5,13 @@ from panda3d.core import *
 packager.setHost("http://localhost/arcns/packs/")
 
 class arcns_mainscene_pack(package):
-    require("panda3d","morepy")
+    require("panda3d","morepy","tk")
     dir("mainscene/models")
     module("mainscene.*")
 
 class arcns_cinescene_pack(package):
     require("panda3d","morepy")
-    module("cinescene.*")
+    module("cinematic.*")
 
 class arcns_gamescene_pack(package):
     require("panda3d","morepy")
@@ -24,6 +24,6 @@ class arcns(p3d):
     dir("models")
     config(display_name="arcns")
     excludeModule("mainscene")
-    excludeModule("cinescene")
+    excludeModule("cinematic")
     excludeModule("gamescene")
     mainModule("main")
