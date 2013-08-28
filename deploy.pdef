@@ -8,6 +8,7 @@ class arcns_mainscene_pack(package):
     require("panda3d","morepy","tk")
     dir("mainscene/models")
     module("mainscene.*")
+    module("mainscene.lang.*")
 
 class arcns_cinescene_pack(package):
     require("panda3d","morepy")

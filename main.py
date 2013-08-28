@@ -10,6 +10,10 @@ from pandac.PandaModules import TransparencyAttrib
 
 import direct.directbase.DirectStart
 
+#TEST
+import sys
+#TEST
+
 class ArcnsApp(DirectObject):
     def __init__(self):
         base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("firstv2.ttf")
@@ -37,10 +41,12 @@ class ArcnsApp(DirectObject):
         #
         from gamescene.gamescene import gameScene
         #
-        #
+        #TEST
         self.accept("t",self.testdel)
+        self.accept("q",sys.exit,[0])
+        #TEST
         #
-        self.curdir = base.appRunner.p3dFilename.getDirname(); self.main_config = None
+        self.curdir = base.appRunner.p3dFilename.getDirname(); self.main_config = None; self.speak = None
         self.scene = mainScene(self); self.scene.request("Init")
     #TEST
     def testdel(self):
