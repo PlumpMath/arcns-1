@@ -7,4 +7,6 @@ win-fixed-size 1
 
 #for dev only
 show-frame-rate-meter #t
-#want-pstats 1
+#want-tk #t
+#want-directtools #t
+#want-pstats #t

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-class cineScene:
+class persoScene:
     def __init__(self):
         #
         #TODO

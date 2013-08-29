@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from panda3d.core import loadPrcFile
+
+loadPrcFile("config.prc")
+
 from direct.showbase.DirectObject import DirectObject
 from direct.gui.DirectGui import *
 from direct.filter.CommonFilters import CommonFilters
@@ -16,10 +20,14 @@ import sys
 
 class ArcnsApp(DirectObject):
     def __init__(self):
-        base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("firstv2.ttf")
+        #
+        base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("misc/firstv2.ttf")
+        #
         cm = CardMaker("cursor"); cm.setFrame(0,0.1,-0.13,0); self.cust_mouse = render.attachNewNode(cm.generate()); self.cust_mouse_tex = {}
-        self.cust_mouse_tex["blank"] = loader.loadTexture("cursors/blank_cursor.png")
-        self.cust_mouse_tex["main"] = loader.loadTexture("cursors/main_cursor.png")
+        #
+        self.cust_mouse_tex["blank"] = loader.loadTexture("models/cursors/blank_cursor.png")
+        self.cust_mouse_tex["main"] = loader.loadTexture("models/cursors/main_cursor.png")
+        #
         self.change_cursor("blank"); self.cust_mouse.setTransparency(TransparencyAttrib.MAlpha)
         self.cust_mouse.reparentTo(render2d); self.cust_mouse.setBin("gui-popup",100)
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node()); self.activeCartoonFilter()
@@ -36,18 +44,26 @@ class ArcnsApp(DirectObject):
         #
         #TODO : vérifier l'utilité d'une scène de cinématique
         #
-        from cinematic.cinescene import cineScene
+        from persoscene.persoscene import persoScene
         #
         #
         from gamescene.gamescene import gameScene
         #
         #TEST
-        self.accept("t",self.testdel)
+        self.accept("d",self.testdel)
         self.accept("q",sys.exit,[0])
         #TEST
         #
-        self.curdir = base.appRunner.p3dFilename.getDirname(); self.main_config = None; self.speak = None
+        #self.curdir = base.appRunner.p3dFilename.getDirname(); self.main_config = None; self.speak = None
+        self.curdir = "../"; self.main_config = None; self.speak = None
+        #
         self.scene = mainScene(self); self.scene.request("Init")
+        #
+        #TEST
+        #self.accept("t",self.scene.actionMainMenu)
+        #TEST
+        #
+        #
     #TEST
     def testdel(self):
         print "testdel"
@@ -56,6 +72,7 @@ class ArcnsApp(DirectObject):
         #
         self.scene = None
         #
+        print "end testdel"
         #
     #TEST
     def activeCartoonFilter(self):
@@ -69,30 +86,29 @@ class ArcnsApp(DirectObject):
     def change_cursor(self,chx):
         self.cust_mouse.setTexture(self.cust_mouse_tex[chx])
     def arcButton(self,txt,pos,cmd,scale=0.08,txtalgn=TextNode.ALeft,extraArgs=[]): #override button
-        ndp = DirectButton(text=txt,scale=scale,text_font=self.arcFont,pos=pos,text_bg=(1,1,1,0.8),relief=None,text_align=txtalgn,
-            command=cmd,extraArgs=extraArgs)
+        ndp = DirectButton(text=txt,scale=scale,text_font=self.arcFont,pos=pos,text_bg=(1,1,1,0.8),relief=None,text_align=txtalgn,extraArgs=extraArgs)
         ndp._DirectGuiBase__componentInfo["text2"][0].setFg((0.03,0.3,0.8,1))
         ndp._DirectGuiBase__componentInfo["text3"][0].setFg((0.3,0.3,0.3,1))
-        return ndp
+        ndp["command"] = cmd; return ndp
     def arcLabel(self,txt,pos,scale=0.08,txtalgn=TextNode.ALeft): #override label
         ndp = DirectLabel(text=txt,scale=scale,pos=pos,text_bg=(1,1,1,0.8),relief=None,text_font=self.arcFont,text_align=txtalgn)
         return ndp
     def arcOptMenu(self,txt,pos,items,init=0,cmd=None,scale=0.08,change=1,txtalgn=TextNode.ALeft,extraArgs=[]):
         ndp = DirectOptionMenu(text=txt,scale=scale,pos=pos,items=items,initialitem=init,textMayChange=change,text_font=self.arcFont,
             text_align=txtalgn,text_bg=(1,1,1,0.8),relief=None,highlightColor=(0.03,0.3,0.8,1),popupMarker_relief=None,
-            popupMarker_pos=(0,0,0),popupMarkerBorder=(0,0),item_text_font=self.arcFont,command=cmd,extraArgs=extraArgs)
-        return ndp
+            popupMarker_pos=(0,0,0),popupMarkerBorder=(0,0),item_text_font=self.arcFont,extraArgs=extraArgs)
+        ndp["command"] = cmd; return ndp
     def arcRadioButton(self,lst_rad,parent,gui,scale=0.08,txtalgn=TextNode.ALeft): #override radio button
         lst_radio = []
         for elt in lst_rad:
-            ndp = DirectRadioButton(text=elt[0],variable=elt[1],value=elt[2],command=elt[3],extraArgs=elt[4],
+            ndp = DirectRadioButton(text=elt[0],variable=elt[1],value=elt[2],extraArgs=elt[4],
                 text_align=txtalgn,scale=scale,pos=elt[5],text_font=self.arcFont,text_bg=(1,1,1,0.8),relief=None)
-            lst_radio.append(ndp)
+            ndp["command"] = elt[3],; lst_radio.append(ndp)
         for elt in lst_radio:
             elt.setOthers(lst_radio); elt.reparentTo(parent); gui.append(elt)
     def arcEntry(self,pos,txt="",cmd=None,scale=0.08,nlines=1): #override entry
-        ndp = DirectEntry(pos=pos,text=txt,command=cmd,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
-        return ndp
+        ndp = DirectEntry(pos=pos,text=txt,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
+        ndp["command"] = cmd; return ndp
     def game_screen(self):
         #
         #TODO : retour à la fenêtre telle qu'elle doit être pour le menu principal

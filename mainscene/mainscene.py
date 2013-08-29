@@ -13,12 +13,14 @@ from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import Tkinter, tkFileDialog, json, sys, lang
 
+cust_path = "mainscene/models/"
 
 class mainScene(FSM,DirectObject):
     """ #****************************
     Méthodes pour l'initialisation
     """ #****************************
     def __init__(self,app):
+        pass
         FSM.__init__(self,"mainScene"); self.defaultTransitions = {"Init":["MainMenu"],"MainMenu":["SubMenu"],"SubMenu":["MainMenu"]}
         camera.setPos(0,-62,12); camera.setHpr(0,-10,0); self.accept("escape",sys.exit,[0])
         self.app = app; self.version = "v0.0"
@@ -31,10 +33,16 @@ class mainScene(FSM,DirectObject):
         self.dic_lights = {}; self.activeLights()
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
+        #
+        #TEST
+        self.states = {"main_chx":0,"main_lst":[]}
+        #
+        #
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"net_menu":{},"option_menu":{}}; self.loadGUI()
         self.dic_statics = {}; self.dic_dynamics = {}; self.loadmodels();
         self.dic_anims = {}; self.activeAnim()
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
+        self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
     def activeLights(self):
         tmp_node = DirectionalLight("dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))
         tmp_lght = render.attachNewNode(tmp_node); tmp_lght.setHpr(0,-70,0); render.setLight(tmp_lght); self.dic_lights["dir_top"] = tmp_lght
@@ -44,38 +52,26 @@ class mainScene(FSM,DirectObject):
         tmp_lght = render.attachNewNode(tmp_node); self.dic_lights["spot_aux_menu"] = tmp_lght
         render.setLight(tmp_lght); tmp_lght.lookAt(6,-0.5,-1.5); tmp_lght.setPos(-8,0,9)
     def loadGUI(self):
-        #
-        #TODO : toute les interfaces sont chargées à partir de cette fonction
-        #
-        print "loadGUI method"
-        #
-        #
-        """
-        #GUI : main menu
-        campaign_btn = arcButton(self.app.lang["main_menu"]["campaign"],(-0.15,0,-0.2),self.valid_main_menu,scale=0.12)
-        campaign_btn.reparentTo(main_frame); campaign_btn["state"] = DGG.DISABLED; self.lst_gui["main_frame"].append(campaign_btn)
-        mission_btn = arcButton(self.app.lang["main_menu"]["mission"],(-0.19,0,-0.34),self.valid_main_menu,scale=0.1)
-        mission_btn.reparentTo(main_frame); mission_btn["state"] = DGG.DISABLED; self.lst_gui["main_frame"].append(mission_btn)
-        network_btn = arcButton(self.app.lang["main_menu"]["network"],(-0.26,0,-0.47),self.valid_main_menu,scale=0.09)
-        network_btn.reparentTo(main_frame); network_btn["state"] = DGG.DISABLED; self.lst_gui["main_frame"].append(network_btn)
-        options_btn = arcButton(self.app.lang["main_menu"]["options"],(-0.35,0,-0.58),self.valid_main_menu,scale=0.07)
-        options_btn.reparentTo(main_frame); options_btn["state"] = DGG.DISABLED; self.lst_gui["main_frame"].append(options_btn)
-        quit_btn = arcButton(self.app.lang["main_menu"]["quit"],(-0.41,0,-0.66),self.valid_main_menu,scale=0.05)
-        quit_btn.reparentTo(main_frame); quit_btn["state"] = DGG.DISABLED; self.lst_gui["main_frame"].append(quit_btn)
-        """
-        #
-        #main_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["main_menu"]["frame"] = tmp_frame
+        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["campaign"],(-0.15,0,-0.2),self.actionMainMenu,scale=0.12)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
+        self.dic_gui["main_menu"]["campaign"] = tmp_gui; self.states["main_lst"].append("campaign")
+        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["mission"],(-0.19,0,-0.34),self.actionMainMenu,scale=0.1)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
+        self.dic_gui["main_menu"]["mission"] = tmp_gui; self.states["main_lst"].append("mission")
+        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["network"],(-0.26,0,-0.47),self.actionMainMenu,scale=0.09)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
+        self.dic_gui["main_menu"]["network"] = tmp_gui; self.states["main_lst"].append("network")
+        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["options"],(-0.35,0,-0.58),self.actionMainMenu,scale=0.07)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
+        self.dic_gui["main_menu"]["options"] = tmp_gui; self.states["main_lst"].append("options")
+        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["quit"],(-0.41,0,-0.66),self.actionMainMenu,scale=0.05)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
+        self.dic_gui["main_menu"]["quit"] = tmp_gui; self.states["main_lst"].append("quit")
         #
-        #TODO : faire la fonction correspondant au bouton
-        #
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["campaign"],(-0.15,0,-0.2),None,scale=0.12)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_menu"]["campaign"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["mission"],(-0.19,0,-0.34),None,scale=0.1)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_menu"]["mission"] = tmp_gui
-        #
-        #TODO : bouton pour le réseau, les options et pour quitter
-        #
+        #TEST
+        #tmp_gui
+        #TEST
         #
         #camp_menu
         #
@@ -111,7 +107,7 @@ class mainScene(FSM,DirectObject):
         #
         #arrows & cards
         #
-        arrow = loader.loadModel("statics/arrow"); c_arr = CardMaker("arrow_hide"); c_arr.setFrame(-1,1,-0.8,0.6)
+        arrow = loader.loadModel(cust_path+"statics/arrow"); c_arr = CardMaker("arrow_hide"); c_arr.setFrame(-1,1,-0.8,0.6)
         #
         #
         #
@@ -138,19 +134,19 @@ class mainScene(FSM,DirectObject):
         """
         #
         #gates and moving arcs
-        tmp_mod = Actor("dynamics/main_gates"); tmp_mod.reparentTo(render)
+        tmp_mod = Actor(cust_path+"dynamics/main_gates"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,-48.2,9.5); tmp_mod.setHpr(0,80,0); self.dic_dynamics["gates"] = tmp_mod
-        tmp_mod = Actor("dynamics/main_m_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
-        tmp_mod = Actor("dynamics/main_a_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
+        tmp_mod = Actor(cust_path+"dynamics/main_m_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
+        tmp_mod = Actor(cust_path+"dynamics/main_a_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
         #décors
-        tmp_mod = base.loader.loadModel("statics/main_sol"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(cust_path+"statics/main_sol"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
-        tmp_mod = base.loader.loadModel("statics/main_roofs"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(cust_path+"statics/main_roofs"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["roofs"] = tmp_mod
-        tmp_mod = base.loader.loadModel("statics/main_arcs_show"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(cust_path+"statics/main_arcs_show"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,7.3,3); self.dic_statics["arcs_shower"] = tmp_mod
         #
-        tmp_mod = base.loader.loadModel("statics/main_title"); tmp_mod.reparentTo(render); self.dic_statics["arc_title"] = tmp_mod
+        tmp_mod = base.loader.loadModel(cust_path+"statics/main_title"); tmp_mod.reparentTo(render); self.dic_statics["arc_title"] = tmp_mod
         #
         #
         #self.dic_dynamics["screens"] = None ####
@@ -159,13 +155,20 @@ class mainScene(FSM,DirectObject):
         #TODO : il ne manque que les écrans et les animations des personnages
         #
     def activeAnim(self):
-        self.dic_anims["arcs_shower_interval"] = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
-        self.dic_anims["arcs_shower_pace"] = Sequence(self.dic_anims["arcs_shower_interval"],name="arcs_shower_pace")
+        tmp_anim = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
+        self.dic_anims["arcs_shower_pace"] = Sequence(tmp_anim,name="arcs_shower_pace")
         self.dic_anims["cam_move_init"] = camera.posInterval(4,Point3(0,-25,12))
         #
         #TODO : suite des animations à charger
         #
         #
+    def mouseTask(self,task):
+        #
+        #
+        #TODO
+        #
+        #
+        return task.cont
     """ #****************************
     Méthodes pour l'état "Init"
     """ #****************************
@@ -174,6 +177,8 @@ class mainScene(FSM,DirectObject):
         self.task_chx = 0; taskMgr.doMethodLater(6.5,self.initTasks,"cam movement")
         taskMgr.doMethodLater(9,self.initTasks,"play arcs_main_menu load anim")
         taskMgr.doMethodLater(11,self.initTasks,"request for the next state")
+    def exitInit(self):
+        pass
     def initTasks(self,task):
         if self.task_chx == 0: #moving camera
             self.dic_anims["cam_move_init"].start(); self.task_chx += 1
@@ -181,8 +186,6 @@ class mainScene(FSM,DirectObject):
             self.dic_dynamics["arcs_main_menu"].play("load"); self.task_chx += 1
         elif self.task_chx == 2: self.request("MainMenu")
         return task.done
-    def exitInit(self):
-        pass
     """ #****************************
     Méthodes pour l'état "MainMenu"
     """ #****************************
@@ -225,6 +228,16 @@ class mainScene(FSM,DirectObject):
         #TODO : lancement de l'animation pour arriver au états correspondant aux différents sous-menus
         #
         pass
+    def actionMainMenu(self):
+        if self.state != "MainMenu":
+            #
+            print "test"
+            #
+            return
+        #
+        print "this is the state !"
+        #
+        #
     """ #****************************
     Méthodes pour l'état "SubMenu"
     """ #****************************
@@ -260,6 +273,7 @@ class mainScene(FSM,DirectObject):
         #
     def close(self):
         #
+        #
         print "close method"
         #
         #TODO : ajout des dicts à effacer
@@ -269,12 +283,19 @@ class mainScene(FSM,DirectObject):
         #TEST
         #
         #
+        taskMgr.remove(self.mouse_task); self.mouse_task = None
+        self.states = None
         for key in self.dic_lights: self.dic_lights[key].removeNode()
         for key1 in self.dic_gui:
-            for key2 in self.dic_gui[key1]: self.dic_gui[key1][key2].removeNode()
+            for key2 in self.dic_gui[key1]:
+                for t in self.dic_gui[key1][key2].options():
+                    if t[0] == "command":
+                        self.dic_gui[key1][key2]["command"] = None; break
+                self.dic_gui[key1][key2].removeNode()
         for key in self.dic_statics: self.dic_statics[key].removeNode()
         for key in self.dic_dynamics: self.dic_dynamics[key].delete()
-        for key in self.dic_anims: self.dic_anims[key] = None
+        for key in self.dic_anims:
+            self.dic_anims[key] = None
         #
         #
         self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
