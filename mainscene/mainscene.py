@@ -7,8 +7,7 @@ from direct.gui.DirectGui import DirectFrame, DGG
 from direct.stdpy.file import *
 from direct.task import Task
 from direct.actor.Actor import Actor
-from panda3d.core import Point3, Vec4, CardMaker
-from panda3d.core import PointLight, DirectionalLight, Spotlight, PerspectiveLens
+from panda3d.core import Point3, Vec4, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import Tkinter, tkFileDialog, json, sys, lang
@@ -16,11 +15,10 @@ import Tkinter, tkFileDialog, json, sys, lang
 cust_path = "mainscene/models/"
 
 class mainScene(FSM,DirectObject):
-    """ #****************************
+    """ ****************************
     Méthodes pour l'initialisation
-    """ #****************************
+    **************************** """
     def __init__(self,app):
-        pass
         FSM.__init__(self,"mainScene"); self.defaultTransitions = {"Init":["MainMenu"],"MainMenu":["SubMenu"],"SubMenu":["MainMenu"]}
         camera.setPos(0,-62,12); camera.setHpr(0,-10,0); self.accept("escape",sys.exit,[0])
         self.app = app; self.version = "v0.0"
@@ -28,20 +26,23 @@ class mainScene(FSM,DirectObject):
             self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file(self.app.curdir+"/config.json","rb")]))
         else:
             self.app.main_config = {"fullscreen":True,"lang_chx":0}
-            try: mcf = open(self.app.curdir+"/config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
+            try:
+            	mcf = open(self.app.curdir+"/config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
             except Exception,e: print e
         self.dic_lights = {}; self.activeLights()
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
         #
-        #TEST
+        # DEBUG : self.states n'est pas encore validé, il pourrait changer
         self.states = {"main_chx":0,"main_lst":[]}
-        #
+        ###
         #
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"net_menu":{},"option_menu":{}}; self.loadGUI()
         self.dic_statics = {}; self.dic_dynamics = {}; self.loadmodels();
         self.dic_anims = {}; self.activeAnim()
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
+        #
+        #
         self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
     def activeLights(self):
         tmp_node = DirectionalLight("dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))
@@ -69,9 +70,9 @@ class mainScene(FSM,DirectObject):
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
         self.dic_gui["main_menu"]["quit"] = tmp_gui; self.states["main_lst"].append("quit")
         #
-        #TEST
+        # DEBUG : zone de création d'éléments gui temporaires
         #tmp_gui
-        #TEST
+        ###
         #
         #camp_menu
         #
@@ -80,24 +81,24 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["frame"] = tmp_frame
         #
         #
-        #TODO : à construire
+        # TODO : éléments gui pour le camp_menu à construire ici
         #
         #mission_menu
         #
-        #TODO : à construire
+        # TODO : éléments gui pour le mission_menu à construire ici
         #
         #net_menu
         #
-        #TODO : à construire
+        # TODO : éléments gui pour le net_menu à construire ici
         #
         #option_menu
         #
-        #TODO : à construire
+        # TODO : éléments gui pour le option_menu à construire ici
         #
         #
     def loadmodels(self):
         #
-        #TODO : tout les modèles sont chargés par cette fonction
+        # TODO : tout les modèles sont chargés par cette fonction
         #
         #
         """
@@ -118,7 +119,7 @@ class mainScene(FSM,DirectObject):
         #arr_up.setPos()
         #
         #
-        #TODO : à construire
+        # TODO : flèches interactives à construire ici
         #
         """
         arr_up = render.attachNewNode("arrow-up"); arr_up.setHpr(0,90,0); arr_up.setPos(4.5,1.5,7); arr_up.hide()
@@ -152,26 +153,26 @@ class mainScene(FSM,DirectObject):
         #self.dic_dynamics["screens"] = None ####
         #self.dic_dynamics["persos_anims"] = None ####
         #
-        #TODO : il ne manque que les écrans et les animations des personnages
+        # TODO : il ne manque que les écrans et les animations des personnages
         #
     def activeAnim(self):
         tmp_anim = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
         self.dic_anims["arcs_shower_pace"] = Sequence(tmp_anim,name="arcs_shower_pace")
         self.dic_anims["cam_move_init"] = camera.posInterval(4,Point3(0,-25,12))
         #
-        #TODO : suite des animations à charger
+        # TODO : suite des animations à charger
         #
         #
     def mouseTask(self,task):
         #
         #
-        #TODO
+        # TODO : l'ensemble de l'algorithme de gestion de la souris
         #
         #
         return task.cont
-    """ #****************************
+    """ ****************************
     Méthodes pour l'état "Init"
-    """ #****************************
+    **************************** """
     def enterInit(self):
         self.dic_anims["arcs_shower_pace"].loop(); self.dic_dynamics["gates"].play("open_gates")
         self.task_chx = 0; taskMgr.doMethodLater(6.5,self.initTasks,"cam movement")
@@ -186,9 +187,9 @@ class mainScene(FSM,DirectObject):
             self.dic_dynamics["arcs_main_menu"].play("load"); self.task_chx += 1
         elif self.task_chx == 2: self.request("MainMenu")
         return task.done
-    """ #****************************
+    """ ****************************
     Méthodes pour l'état "MainMenu"
-    """ #****************************
+    **************************** """
     def enterMainMenu(self):
         #
         self.app.change_cursor("main")
@@ -218,14 +219,14 @@ class mainScene(FSM,DirectObject):
             return task.done
         """
         #
-        #TODO : mise en place des captures
+        # TODO : mise en place des captures pour l'état "MainMenu"
         #
-        #TODO : affichage du menu principal, et mise en place des intéractions
+        # TODO : affichage du menu principal, et mise en place des intéractions
         #
         pass
     def exitMainMenu(self):
         #
-        #TODO : lancement de l'animation pour arriver au états correspondant aux différents sous-menus
+        # TODO : lancement de l'animation pour arriver au états correspondant aux différents sous-menus
         #
         pass
     def actionMainMenu(self):
@@ -238,14 +239,14 @@ class mainScene(FSM,DirectObject):
         print "this is the state !"
         #
         #
-    """ #****************************
+    """ ****************************
     Méthodes pour l'état "SubMenu"
-    """ #****************************
+    **************************** """
     def enterSubMenu(self):
         #
-        #TODO : simple affichage des différents sous-menus
+        # TODO : simple affichage des différents sous-menus
         #
-        #TODO : le code ci-dessous apartiendra à une méthode de cet état
+        # TODO : le code ci-dessous apartiendra à une méthode de cet état
         """   Tkinter open filepicker and dirpicker
         root = Tkinter.Tk(); root.withdraw()
         print tkFileDialog.askopenfilename(filetypes=[("Saves","*.save"),("All","*")])
@@ -256,36 +257,42 @@ class mainScene(FSM,DirectObject):
         pass
     def exitSubMenu(self):
         #
-        #TODO : correspond au retour au menu principal
+        # TODO : retour au menu principal depuis un sous-menu
         #
         pass
-    """ #****************************
+    """ ****************************
     Méthodes pour la sortie du menu principal
-    """ #****************************
+    **************************** """
     def launchGame(self):
         #
-        #TODO : lancement du jeu. Ce n'est pas un changement de state, c'est une exécution de méthode simple, avec des tasks
+        # TODO : lancement du jeu. Ce n'est pas un changement de state, c'est une exécution de méthode simple, avec des tasks
+        #
+        # TODO : animation de sortie du menu principal
         #
         print "launchGame method"
         #
         #
         self.ignoreAll()
         #
+        #
+        # TODO : lancement de la task pour lancer game_screen dans main.py, et changer de FSM / scene
+        #
+        #
     def close(self):
         #
         #
         print "close method"
         #
-        #TODO : ajout des dicts à effacer
+        # TODO : ajout des dicts à effacer lors de la suppression de la scène
         #
-        #TEST
+        # DEBUG : annulation de toutes les touches lors de la fermeture de la scène
         self.ignoreAll()
-        #TEST
-        #
+        ###
         #
         taskMgr.remove(self.mouse_task); self.mouse_task = None
         self.states = None
-        for key in self.dic_lights: self.dic_lights[key].removeNode()
+        for key in self.dic_lights:
+        	render.clearLight(self.dic_lights[key]); self.dic_lights[key].removeNode()
         for key1 in self.dic_gui:
             for key2 in self.dic_gui[key1]:
                 for t in self.dic_gui[key1][key2].options():
@@ -295,7 +302,7 @@ class mainScene(FSM,DirectObject):
         for key in self.dic_statics: self.dic_statics[key].removeNode()
         for key in self.dic_dynamics: self.dic_dynamics[key].delete()
         for key in self.dic_anims:
-            self.dic_anims[key] = None
+        	self.dic_anims[key].finish(); self.dic_anims[key] = None
         #
         #
         self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
@@ -304,5 +311,7 @@ class mainScene(FSM,DirectObject):
         #
         print "end close"
         #
+    # DEBUG : cette fonction n'aura plus d'utilité une fois le code de la scène terminé
     def __del__(self):
         print "delete mainscene"
+    ###
