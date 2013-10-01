@@ -18,10 +18,11 @@ import direct.directbase.DirectStart
 
 class ArcnsApp(DirectObject):
     def __init__(self):
-    	base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("misc/firstv2.ttf")
+    	base.disableMouse(); base.setBackgroundColor(1,1,1)
+    	self.arcFont = base.loader.loadFont(("" if base.appRunner else "misc/")+"firstv2.ttf")
         self.cust_mouse_tex = {}
-        self.cust_mouse_tex["blank"] = loader.loadTexture("models/cursors/blank_cursor.png")
-        self.cust_mouse_tex["main"] = loader.loadTexture("models/cursors/main_cursor.png")
+        self.cust_mouse_tex["blank"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/blank_cursor.png")
+        self.cust_mouse_tex["main"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/main_cursor.png")
         self.alghtnode = AmbientLight("ambient light"); self.alghtnode.setColor(Vec4(0.4,0.4,0.4,1))
         self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(0,0,0,0.8)); self.voile.setBin("gui-popup",1); self.voile.hide()
         cust_path = ("" if base.appRunner else "mainscene/models/")

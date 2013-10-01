@@ -5,7 +5,7 @@ fr_lang = {
     "main_menu":{
         "campaign":"Campagne",
         "mission":"Missions",
-        "network":"Réseau",
+        "maj":"Mettre à jour",
         "options":"Options",
         "quit":"Quitter"
     },
@@ -25,8 +25,8 @@ fr_lang = {
     "mission_menu":{
         "stitre":"Missions :"
     },
-    "network_menu":{
-        "stitre":"Réseau :"
+    "maj_menu":{
+        "stitre":"Mise à jour :"
     },
     "option_menu":{
         "stitre":"Options :",
