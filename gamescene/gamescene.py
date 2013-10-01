@@ -7,6 +7,8 @@ from panda3d.core import Point3, Vec4, DirectionalLight
 #
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
+import sys
+
 class gameScene(FSM,DirectObject):
     """ ****************************
     Méthodes pour l'initialisation
@@ -21,6 +23,7 @@ class gameScene(FSM,DirectObject):
         #
         # DEBUG : test du passage de la scène et du display
         self.accept("a",self.app.main_screen)
+        self.accept("escape",sys.exit,[0])
         #
         self.tmp_mod = base.loader.loadModel("mainscene/models/statics/main_arcs_show")
         self.tmp_mod.reparentTo(render)

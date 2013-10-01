@@ -16,10 +16,6 @@ from gamescene.gamescene import gameScene
 
 import direct.directbase.DirectStart
 
-# NOTE : import de sys pour pouvoir quitter lors des tests
-import sys
-###
-
 class ArcnsApp(DirectObject):
     def __init__(self):
     	base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("misc/firstv2.ttf")
@@ -28,42 +24,26 @@ class ArcnsApp(DirectObject):
         self.cust_mouse_tex["main"] = loader.loadTexture("models/cursors/main_cursor.png")
         self.alghtnode = AmbientLight("ambient light"); self.alghtnode.setColor(Vec4(0.4,0.4,0.4,1))
         self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(0,0,0,0.8)); self.voile.setBin("gui-popup",1); self.voile.hide()
-        #
-        # DEBUG : commande pour quitter l'application et pour supprimer la scene pour vérifier le gc
-        self.accept("d",self.game_screen)
-        self.accept("q",sys.exit,[0])
-        ###
-        #
-        self.curdir = (base.appRunner.p3dFilename.getDirname() if base.appRunner else "..")
+        cust_path = ("" if base.appRunner else "mainscene/models/")
+        self.arrow_mod = loader.loadModel(cust_path+"statics/arrow")
+        self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1,1,-0.8,0.6)
+        self.mouse_trav = CollisionTraverser(); self.mouse_hand = CollisionHandlerQueue()
+        self.pickerNode = CollisionNode("mouseRay"); self.pickerNP = camera.attachNewNode(self.pickerNode)
+        self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
+        self.pickerNode.addSolid(self.pickerRay); self.mouse_trav.addCollider(self.pickerNP,self.mouse_hand)
+        self.curdir = (base.appRunner.p3dFilename.getDirname() if base.appRunner else ".")
+        self.initScreen(); self.change_cursor("blank"); self.transit = None
         self.main_config = None; self.speak = None; self.scene = mainScene(self); self.scene.request("Init")
-        self.initScreen(); self.change_cursor("blank")
     	base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
+    def clearScreen(self):
+        self.cust_mouse.removeNode(); render.clearLight(self.alght); self.alght.removeNode(); self.pickly_node.removeNode()
     def initScreen(self,x=640,y=480):
-        try:
-        	self.cust_mouse.removeNode()
-        	render.clearLight(self.alght); self.alght.removeNode()
-        	#
-        	# TODO : tous les éléments qui transitent entre les scènes doivent au préalable être effacés
-        	#
-    	except: pass
     	x = (640.0/x) * 0.1; y = (480.0/y) * -0.13
         cm = CardMaker("cursor"); cm.setFrame(0,x,y,0); self.cust_mouse = render.attachNewNode(cm.generate())
         self.cust_mouse.setTransparency(TransparencyAttrib.MAlpha)
         self.cust_mouse.reparentTo(render2d); self.cust_mouse.setBin("gui-popup",100)
         self.alght = render.attachNewNode(self.alghtnode); render.setLight(self.alght)
-        #
-        # TODO : ajout des éléments qui doivent transiter entre les scènes (alight et voile)
-        #
-        #
-        """
-        self.mouse_trav = CollisionTraverser(); self.mouse_hand = CollisionHandlerQueue()
-        self.pickerNode = CollisionNode("mouseRay"); self.pickerNP = camera.attachNewNode(self.pickerNode)
-        self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
-        self.pickerNode.addSolid(self.pickerRay); self.mouse_trav.addCollider(self.pickerNP,self.mouse_hand)
         self.pickly_node = render.attachNewNode("pickly_node")
-        """
-        #
-        #
     def change_cursor(self,chx):
         self.cust_mouse.setTexture(self.cust_mouse_tex[chx])
     def arcButton(self,txt,pos,cmd,scale=0.08,txtalgn=TextNode.ALeft,extraArgs=[]): #override button
@@ -91,14 +71,14 @@ class ArcnsApp(DirectObject):
         ndp = DirectEntry(pos=pos,text=txt,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
         ndp["command"] = cmd; return ndp
     def main_screen(self):
-        self.scene.close(); self.scene = None; self.scene = mainScene(self); self.scene.request("Init")
+        self.scene.close(); self.scene = None; self.clearScreen()
         wp = WindowProperties()
         if self.main_config["fullscreen"]: wp.setFullscreen(False)
         wp.setSize(640,480); base.openMainWindow(wp,makeCamera=False,keepCamera=True)
-        self.initScreen(); self.change_cursor("blank")
+        self.initScreen(); self.change_cursor("blank"); self.scene = mainScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
     def game_screen(self):
-        self.scene.close(); self.scene = None;  self.scene = gameScene(self); self.scene.request("Init")
+        self.scene.close(); self.scene = None; self.clearScreen();
         x = 950; y = 700; wp = WindowProperties()
         if self.main_config["fullscreen"]:
             di = base.pipe.getDisplayInformation()
@@ -109,8 +89,7 @@ class ArcnsApp(DirectObject):
             wp.setFullscreen(True)
         elif not self.main_config["fullscreen"]: wp.setSize(950,700)
         base.openMainWindow(wp,makeCamera=False,keepCamera=True)
-        self.initScreen(x,y); self.change_cursor("main")
+        self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
-
 
 app = ArcnsApp(); run()

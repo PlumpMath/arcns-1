@@ -7,12 +7,10 @@ from direct.gui.DirectGui import DirectFrame, DGG
 from direct.stdpy.file import *
 from direct.task import Task
 from direct.actor.Actor import Actor
-from panda3d.core import Point3, Vec4, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens
+from panda3d.core import Point3, Vec4, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import Tkinter, tkFileDialog, json, sys, lang
-
-cust_path = "mainscene/models/"
 
 class mainScene(FSM,DirectObject):
     """ ****************************
@@ -33,12 +31,19 @@ class mainScene(FSM,DirectObject):
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
         #
+        self.cust_path = ("" if base.appRunner else "mainscene/models/")
+        #
         # DEBUG : self.states n'est pas encore validé, il pourrait changer
         self.states = {"main_chx":0,"main_lst":[]}
         ###
         #
+        # DEBUG : commande pour les tests
+        self.accept("d",self.app.game_screen)
+        ###
+        #
+        #
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"net_menu":{},"option_menu":{}}; self.loadGUI()
-        self.dic_statics = {}; self.dic_dynamics = {}; self.loadmodels();
+        self.dic_arrows= {}; self.dic_statics = {}; self.dic_dynamics = {}; self.loadmodels();
         self.dic_anims = {}; self.activeAnim()
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
         #
@@ -108,18 +113,14 @@ class mainScene(FSM,DirectObject):
         #
         #arrows & cards
         #
-        arrow = loader.loadModel(cust_path+"statics/arrow"); c_arr = CardMaker("arrow_hide"); c_arr.setFrame(-1,1,-0.8,0.6)
-        #
-        #
-        #
-        arr_up = render.attachNewNode("arrow-up")
-        #
-        arr_up.setHpr(0,90,0)
-        #
-        #arr_up.setPos()
-        #
-        #
         # TODO : flèches interactives à construire ici
+        #
+        arr_up = render.attachNewNode("main arrow up"); arr_up.setHpr(0,90,0); arr_up.setPos(4.5,1.5,7)#; arr_up.hide()
+        self.app.arrow_mod.instanceTo(arr_up); arr_up.reparentTo(render)
+        arr_up_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_up_crd.node().setIntoCollideMask(BitMask32.bit(1)); arr_up_crd.hide()
+        arr_up_crd.node().setTag("arrow","mainup"); arr_up_crd.reparentTo(self.app.pickly_node); arr_up_crd.setPos(4.5,1.7,7)
+        self.dic_arrows["arrow_up"] = {"node":arr_up,"card":arr_up_crd,"status":0,"posn":[4.5,1.5,7],"posh":[4.5,1.7,7.2]}
+        #
         #
         """
         arr_up = render.attachNewNode("arrow-up"); arr_up.setHpr(0,90,0); arr_up.setPos(4.5,1.5,7); arr_up.hide()
@@ -127,6 +128,7 @@ class mainScene(FSM,DirectObject):
         self.app.lst_arrows.append({"name":"arr_up","status":0,"node":arr_up,"posn":[4.5,1.5,7],"posh":[4.5,1.7,7.2]})
         sqp_up = render.attachNewNode(self.app.c_arr.generate()); sqp_up.hide(); sqp_up.node().setIntoCollideMask(BitMask32.bit(1))
         sqp_up.node().setTag("arrow","up"); sqp_up.reparentTo(self.app.pickly_node); sqp_up.setPos(4.5,1.5,7)
+        #
         arr_dn = render.attachNewNode("arrow-dn"); arr_dn.setHpr(180,-90,0); arr_dn.setPos(4.5,1.5,5); arr_dn.hide()
         self.app.arrow.instanceTo(arr_dn); arr_dn.reparentTo(render)
         self.app.lst_arrows.append({"name":"arr_dn","status":0,"node":arr_dn,"posn":[4.5,1.5,5],"posh":[4.5,1.7,4.8]})
@@ -135,19 +137,21 @@ class mainScene(FSM,DirectObject):
         """
         #
         #gates and moving arcs
-        tmp_mod = Actor(cust_path+"dynamics/main_gates"); tmp_mod.reparentTo(render)
+        tmp_mod = Actor(self.cust_path+"dynamics/main_gates"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,-48.2,9.5); tmp_mod.setHpr(0,80,0); self.dic_dynamics["gates"] = tmp_mod
-        tmp_mod = Actor(cust_path+"dynamics/main_m_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
-        tmp_mod = Actor(cust_path+"dynamics/main_a_menu"); tmp_mod.reparentTo(render); tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
+        tmp_mod = Actor(self.cust_path+"dynamics/main_m_menu"); tmp_mod.reparentTo(render)
+        tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
+        tmp_mod = Actor(self.cust_path+"dynamics/main_a_menu"); tmp_mod.reparentTo(render)
+        tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
         #décors
-        tmp_mod = base.loader.loadModel(cust_path+"statics/main_sol"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_sol"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
-        tmp_mod = base.loader.loadModel(cust_path+"statics/main_roofs"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_roofs"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["roofs"] = tmp_mod
-        tmp_mod = base.loader.loadModel(cust_path+"statics/main_arcs_show"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_arcs_show"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,7.3,3); self.dic_statics["arcs_shower"] = tmp_mod
         #
-        tmp_mod = base.loader.loadModel(cust_path+"statics/main_title"); tmp_mod.reparentTo(render); self.dic_statics["arc_title"] = tmp_mod
+        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_title"); tmp_mod.reparentTo(render); self.dic_statics["arc_title"] = tmp_mod
         #
         #
         #self.dic_dynamics["screens"] = None ####
@@ -164,10 +168,31 @@ class mainScene(FSM,DirectObject):
         #
         #
     def mouseTask(self,task):
-        #
-        #
-        # TODO : l'ensemble de l'algorithme de gestion de la souris
-        #
+        if base.mouseWatcherNode.hasMouse():
+            #
+            mpos = base.mouseWatcherNode.getMouse()
+            #
+            self.app.pickerRay.setFromLens(base.camNode,mpos.getX(),mpos.getY())
+            #
+            self.app.mouse_trav.traverse(self.app.pickly_node)
+            #
+            # TODO : ajouter un élément de vérification pour contrer la détection lors des mouvements de camera
+            #
+            if self.app.mouse_hand.getNumEntries() > 0: # and self.nomove:
+                #
+                # TODO : switch pour checker l'état de la classe, et savoir si une détection est réellement nécessaire
+                #
+                if self.state == "MainMenu":
+                    #
+                    # TODO : gestion des flèches lorsque le menu principal est activé
+                    #
+                    print "MainMenu detection activated"
+                    #
+                    pass
+                #
+                #
+            #
+            #
         #
         return task.cont
     """ ****************************
@@ -253,7 +278,6 @@ class mainScene(FSM,DirectObject):
         print tkFileDialog.askdirectory()
         """
         #
-        #
         pass
     def exitSubMenu(self):
         #
@@ -271,12 +295,13 @@ class mainScene(FSM,DirectObject):
         #
         print "launchGame method"
         #
-        #
-        self.ignoreAll()
-        #
+        self.ignoreAll(); self.accept("escape",sys.exit,[0])
         #
         # TODO : lancement de la task pour lancer game_screen dans main.py, et changer de FSM / scene
         #
+        # TODO : remplissage de la variable de transition
+        #
+        #self.app.transit = {}
         #
     def close(self):
         #
@@ -285,11 +310,7 @@ class mainScene(FSM,DirectObject):
         #
         # TODO : ajout des dicts à effacer lors de la suppression de la scène
         #
-        # DEBUG : annulation de toutes les touches lors de la fermeture de la scène
-        self.ignoreAll()
-        ###
-        #
-        taskMgr.remove(self.mouse_task); self.mouse_task = None
+        self.ignoreAll();  taskMgr.remove(self.mouse_task); self.mouse_task = None
         self.states = None
         for key in self.dic_lights:
         	render.clearLight(self.dic_lights[key]); self.dic_lights[key].removeNode()
@@ -299,6 +320,13 @@ class mainScene(FSM,DirectObject):
                     if t[0] == "command":
                         self.dic_gui[key1][key2]["command"] = None; break
                 self.dic_gui[key1][key2].removeNode()
+        for key in self.dic_arrows:
+            self.dic_arrows[key]["node"].removeNode()
+            #
+            # TODO : suppression des cards derrière les flèches
+            #
+            self.dic_arrows[key]["card"].removeNode()
+            #
         for key in self.dic_statics: self.dic_statics[key].removeNode()
         for key in self.dic_dynamics: self.dic_dynamics[key].delete()
         for key in self.dic_anims:
