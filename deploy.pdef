@@ -12,11 +12,21 @@ class arcns_mainscene_pack(package):
 
 class arcns_persoscene_pack(package):
     require("panda3d","morepy")
+    #
+    # TODO : ajout des models
+    #
     module("persoscene.*")
+    #
+    # TODO : ajout des fichiers de traduction
+    #
 
 class arcns_gamescene_pack(package):
     require("panda3d","morepy")
+    #
+    # TODO : ajout des models
+    #
     module("gamescene.*")
+    module("gamescene.lang.*")
 
 class arcns(p3d):
     require("panda3d","arcns_mainscene_pack","arcns_persoscene_pack","arcns_gamescene_pack")

@@ -7,7 +7,7 @@ from panda3d.core import Point3, Vec4, DirectionalLight
 #
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
-import sys
+import sys, lang
 
 class gameScene(FSM,DirectObject):
     """ ****************************

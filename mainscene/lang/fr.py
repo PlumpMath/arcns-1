@@ -26,7 +26,10 @@ fr_lang = {
         "stitre":"Missions :"
     },
     "maj_menu":{
-        "stitre":"Mise à jour :"
+        "stitre":"Mise à jour :",
+        "verify":"Vérifier les mises à jour",
+        "cancel":"Annuler",
+        "doit":"Mettre à jour"
     },
     "option_menu":{
         "stitre":"Options :",

@@ -26,7 +26,10 @@ en_lang = {
         "stitre":"Missions :"
     },
     "maj_menu":{
-        "stitre":"Update :"
+        "stitre":"Update :",
+        "verify":"Check for update",
+        "cancel":"Cancel",
+        "doit":"Do update"
     },
     "option_menu":{
         "stitre":"Options :",

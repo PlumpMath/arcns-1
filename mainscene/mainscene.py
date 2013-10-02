@@ -5,9 +5,8 @@ from direct.fsm.FSM import FSM
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import DirectFrame, DGG
 from direct.stdpy.file import *
-from direct.task import Task
 from direct.actor.Actor import Actor
-from panda3d.core import Point3, Vec4, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
+from panda3d.core import Point3, Vec4, TextNode, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import Tkinter, tkFileDialog, json, sys, lang
@@ -77,13 +76,24 @@ class mainScene(FSM,DirectObject):
         #
         # DEBUG : zone de création d'éléments gui temporaires
         #tmp_gui
+        self.dic_gui["tmp_menu"] = {}
+        #
+        tmp_frame = DirectFrame(); tmp_frame.hide()
+        self.dic_gui["tmp_menu"]["frame"] = tmp_frame; tmp_frame.reparentTo(self.app.voile)
+        #
+        tmp_gui = self.app.arcLabel("Work In Progress",(0,0,0),0.12,TextNode.ACenter); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["tmp_menu"]["wip"] = tmp_gui
+        #
+        tmp_gui = self.app.arcButton("Back",(0,0,-0.2),self.voile_debug,txtalgn=TextNode.ACenter); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["tmp_menu"]["back"] = tmp_gui
+        #
         ###
         #
         #camp_menu
         #
-        tmp_frame = DirectFrame()#; tmp_frame.hide()
+        #tmp_frame = DirectFrame()#; tmp_frame.hide()
         #
-        self.dic_gui["camp_menu"]["frame"] = tmp_frame
+        #self.dic_gui["camp_menu"]["frame"] = tmp_frame
         #
         #
         # TODO : éléments gui pour le camp_menu à construire ici
@@ -94,7 +104,13 @@ class mainScene(FSM,DirectObject):
         #
         #maj_menu
         #
+        tmp_frame = DirectFrame(); tmp_frame.hide()
+        self.dic_gui["maj_menu"]["frame"] = tmp_frame; tmp_frame.reparentTo(self.app.voile)
+        #
         # TODO : éléments gui pour le maj_menu à construire ici
+        #
+        tmp_gui = self.app.arcLabel(self.app.speak["maj_menu"]["stitre"],(0,0,0),0.12,TextNode.ACenter); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["maj_menu"]["stitre"] = tmp_gui
         #
         #option_menu
         #
@@ -103,16 +119,16 @@ class mainScene(FSM,DirectObject):
         #
     def loadmodels(self):
         #arrows & cards
-        arr_up = render.attachNewNode("main arrow up"); arr_up.setHpr(0,90,0); arr_up.setPos(4.5,1.5,7); arr_up.hide()
+        arr_up = render.attachNewNode("main arrow up"); arr_up.setHpr(0,90,0); arr_up.setPos(6.2,1.5,7); arr_up.hide()
         self.app.arrow_mod.instanceTo(arr_up); arr_up.reparentTo(render)
         arr_up_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_up_crd.node().setIntoCollideMask(BitMask32.bit(1)); arr_up_crd.hide()
-        arr_up_crd.node().setTag("arrow","mainup"); arr_up_crd.reparentTo(self.app.pickly_node); arr_up_crd.setPos(4.5,1.7,7)
-        self.dic_arrows["arrow_up"] = {"node":arr_up,"card":arr_up_crd,"status":0,"posn":[4.5,1.5,7],"posh":[4.5,1.7,7.2]}
-        arr_dn = render.attachNewNode("main arrow down"); arr_dn.setHpr(180,-90,0);  arr_dn.setPos(4.5,1.5,5); arr_dn.hide()
+        arr_up_crd.node().setTag("arrow","mainup"); arr_up_crd.reparentTo(self.app.pickly_node); arr_up_crd.setPos(6.2,1.7,7)
+        self.dic_arrows["arrow_up"] = {"node":arr_up,"card":arr_up_crd,"status":0,"posn":[6.2,1.5,7],"posh":[6.2,1.7,7.2]}
+        arr_dn = render.attachNewNode("main arrow down"); arr_dn.setHpr(180,-90,0);  arr_dn.setPos(6.2,1.5,5); arr_dn.hide()
         self.app.arrow_mod.instanceTo(arr_dn); arr_dn.reparentTo(render)
         arr_dn_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_dn_crd.node().setIntoCollideMask(BitMask32.bit(1)); arr_dn_crd.hide()
-        arr_dn_crd.node().setTag("arrow","maindn"); arr_dn_crd.reparentTo(self.app.pickly_node); arr_dn_crd.setPos(4.5,1.7,5.2)
-        self.dic_arrows["arrow_dn"] = {"node":arr_dn,"card":arr_dn_crd,"status":0,"posn":[4.5,1.5,5],"posh":[4.5,1.7,4.8]}
+        arr_dn_crd.node().setTag("arrow","maindn"); arr_dn_crd.reparentTo(self.app.pickly_node); arr_dn_crd.setPos(6.2,1.7,5.2)
+        self.dic_arrows["arrow_dn"] = {"node":arr_dn,"card":arr_dn_crd,"status":0,"posn":[6.2,1.5,5],"posh":[6.2,1.7,4.8]}
         #
         # TODO : flèches pour les différents sous-menus à construire ici
         #
@@ -143,6 +159,8 @@ class mainScene(FSM,DirectObject):
         tmp_anim = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
         self.dic_anims["arcs_shower_pace"] = Sequence(tmp_anim,name="arcs_shower_pace")
         self.dic_anims["cam_move_init"] = camera.posInterval(4,Point3(0,-25,12))
+        #
+        self.dic_anims["move_texts"] = None
         #
         # TODO : suite des animations à charger
         #
@@ -192,17 +210,88 @@ class mainScene(FSM,DirectObject):
     Méthodes pour l'état "MainMenu"
     **************************** """
     def enterMainMenu(self):
-        self.app.change_cursor("main"); self.dic_gui["main_menu"]["frame"].show(); self.nomove = True
-        #
-        # TODO : système de gestion des arrows, pour savoir lesquels ils faut afficher
-        #
+        self.app.change_cursor("main"); self.dic_gui["main_menu"]["frame"].show(); taskMgr.add(self.reactiveMainMenu,"reactive MainMenu")
+        self.dic_arrows["arrow_up"]["status"] = 1; self.dic_arrows["arrow_dn"]["status"] = 1
+        self.dic_gui["main_menu"][self.states["main_lst"][self.states["main_chx"]]]["state"] = DGG.NORMAL
+    def exitMainMenu(self):
+        pass
+    def actionMainMenu(self,value="valid"):
+        if not self.nomove: return
+        if value == "click":
+            if self.dic_arrows["arrow_up"]["status"] == 2: value = "up"
+            elif self.dic_arrows["arrow_dn"]["status"] == 2: value = "down"
+            else: return
+        self.dic_gui["main_menu"][self.states["main_lst"][self.states["main_chx"]]]["state"] = DGG.DISABLED
+        if value == "down" or value == "up":
+            sens = None
+            if value == "down" and self.states["main_chx"] > 0: sens = True
+            elif value == "up" and self.states["main_chx"] < 4: sens = False
+            if sens != None:
+                self.states["main_chx"] += (-1 if sens else 1)
+                self.dic_arrows["arrow_up"]["node"].hide(); self.dic_arrows["arrow_dn"]["node"].hide()
+                pos_texts = [(-0.41,0,0.31),(-0.35,0,0.22),(-0.26,0,0.1),(-0.19,0,-0.04),(-0.15,0,-0.2),(-0.19,0,-0.34),(-0.26,0,-0.47),(-0.35,0,-0.58),(-0.41,0,-0.66)]
+                scale_texts = [0.05,0.07,0.09,0.1,0.12,0.1,0.09,0.07,0.05]
+                try: self.dic_anims["move_texts"].finish()
+                except: pass
+                self.dic_anims["move_texts"] = None; self.dic_anims["move_texts"] = Parallel(name="MainMenu movement")
+                for it in range(5):
+                    tmp_anim = self.dic_gui["main_menu"][self.states["main_lst"][it]].posInterval(0.4,Point3(pos_texts[4-self.states["main_chx"]+it]))
+                    self.dic_anims["move_texts"].append(tmp_anim)
+                    tmp_anim = self.dic_gui["main_menu"][self.states["main_lst"][it]].scaleInterval(0.4,scale_texts[4-self.states["main_chx"]+it])
+                    self.dic_anims["move_texts"].append(tmp_anim)
+                self.dic_dynamics["arcs_main_menu"].play("state_"+str(self.states["main_chx"]+(1 if sens else -1))+"_"+str(self.states["main_chx"]))
+                self.nomove = False; self.dic_anims["move_texts"].start(); taskMgr.doMethodLater(0.4,self.reactiveMainMenu,"reactive MainMenu")
+        elif value == "valid":
+            self.ignoreAll(); self.accept("escape",sys.exit,[0]); self.nomove = False
+            if self.states["main_chx"] == 0:
+                #
+                # TODO : lancement du sous menu "Campagne"
+                #
+                # DEBUG : affichage du voile avec le label "WIP" à la place du sous menu "Campagne"
+                self.app.voile.show(); self.dic_gui["tmp_menu"]["frame"].show(); self.accept("enter",self.voile_debug)
+                ###
+                #
+            elif self.states["main_chx"] == 1:
+                #
+                # TODO : lancement du sous menu "Missions"
+                #
+                # DEBUG : affichage du voile avec le label "WIP" à la place du sous menu "Missions"
+                self.app.voile.show(); self.dic_gui["tmp_menu"]["frame"].show(); self.accept("enter",self.voile_debug)
+                ###
+                #
+            elif self.states["main_chx"] == 2:
+                #
+                # TODO : affichage du système de mise à jour
+                #
+                self.app.voile.show(); self.dic_gui["maj_menu"]["frame"].show()
+                #
+                #
+            elif self.states["main_chx"] == 3:
+                #
+                # TODO : lancement du sous menu "Options"
+                #
+                # DEBUG : affichage du voile avec le label "WIP"
+                self.app.voile.show(); self.dic_gui["tmp_menu"]["frame"].show(); self.accept("enter",self.voile_debug)
+                ###
+                #
+            elif self.states["main_chx"] == 4: sys.exit(0)
+    def reactiveMainMenu(self,task):
+        self.nomove = True
         if self.states["main_chx"] < 4: self.dic_arrows["arrow_up"]["node"].show()
         if self.states["main_chx"] > 0: self.dic_arrows["arrow_dn"]["node"].show()
-        #
-        self.dic_arrows["arrow_up"]["status"] = 1; self.dic_arrows["arrow_dn"]["status"] = 1
-        #
-        #
         self.dic_gui["main_menu"][self.states["main_lst"][self.states["main_chx"]]]["state"] = DGG.NORMAL
+        #capture de la souris
+        self.accept("mouse1",self. actionMainMenu,["click"]); self.accept("wheel_up",self.actionMainMenu,["up"])
+        self.accept("wheel_down",self.actionMainMenu,["down"])
+        #capture du clavier
+        self.accept("arrow_up",self.actionMainMenu,["up"]); self.accept("arrow_down",self.actionMainMenu,["down"])
+        self.accept("enter",self.actionMainMenu,["valid"])
+        return task.done
+    # DEBUG : gesiton du voile avec le label "WIP"
+    def voile_debug(self):
+        self.dic_gui["tmp_menu"]["frame"].hide(); self.app.voile.hide()
+        self.dic_gui["main_menu"][self.states["main_lst"][self.states["main_chx"]]]["state"] = DGG.NORMAL
+        self.ignoreAll(); self.accept("escape",sys.exit,[0]); self.nomove = True
         #capture de la souris
         self.accept("mouse1",self. actionMainMenu,["click"])
         self.accept("wheel_up",self.actionMainMenu,["up"])
@@ -211,44 +300,7 @@ class mainScene(FSM,DirectObject):
         self.accept("arrow_up",self.actionMainMenu,["up"])
         self.accept("arrow_down",self.actionMainMenu,["down"])
         self.accept("enter",self.actionMainMenu,["valid"])
-    def exitMainMenu(self):
-        pass
-    def actionMainMenu(self,value):
-        if not self.nomove: return
-        if value == "click":
-            #
-            # TODO : click de la souris
-            #
-            #value = "valid"
-            #
-            pass
-        if value == "down":
-            if self.states["main_chx"] > 0:
-                #
-                # TODO : animation de la descente du menu principal
-                #
-                self.nomove = False
-                #
-            else: return
-        elif value == "up":
-            if self.states["main_chx"] < 4:
-                #
-                # TODO : montée du menu principal
-                #
-                self.nomove = False
-                #
-            else: return
-        elif value == "valid":
-            #
-            # TODO : validation du menu principal
-            #
-            for key in self.states["main_lst"]: self.dic_gui["main_menu"][key]["state"] = DGG.DISABLED
-            #
-            print "validation"
-            #
-            self.ignoreAll(); self.accept("escape",sys.exit,[0]); self.nomove = False
-            #
-        #
+    ###
     """ ****************************
     Méthodes pour l'état "SubMenu"
     **************************** """
@@ -296,14 +348,12 @@ class mainScene(FSM,DirectObject):
         #self.app.transit = {}
         #
     def close(self):
-        #
-        #
-        print "close method"
-        #
-        # TODO : ajout des dicts à effacer lors de la suppression de la scène
-        #
         self.ignoreAll();  taskMgr.remove(self.mouse_task); self.mouse_task = None
         self.states = None
+        for key in self.dic_anims:
+            try: self.dic_anims[key].finish()
+            except: pass
+            self.dic_anims[key] = None
         for key in self.dic_lights:
         	render.clearLight(self.dic_lights[key]); self.dic_lights[key].removeNode()
         for key1 in self.dic_gui:
@@ -316,16 +366,8 @@ class mainScene(FSM,DirectObject):
             self.dic_arrows[key]["node"].removeNode(); self.dic_arrows[key]["card"].removeNode()
         for key in self.dic_statics: self.dic_statics[key].removeNode()
         for key in self.dic_dynamics: self.dic_dynamics[key].delete()
-        for key in self.dic_anims:
-        	self.dic_anims[key].finish(); self.dic_anims[key] = None
-        #
-        #
         self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
-        #
         self.vers_txt.removeNode()
-        #
-        print "end close"
-        #
     # DEBUG : cette fonction n'aura plus d'utilité une fois le code de la scène terminé
     def __del__(self):
         print "delete mainscene"
