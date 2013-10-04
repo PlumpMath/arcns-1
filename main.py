@@ -24,7 +24,7 @@ class ArcnsApp(DirectObject):
         self.cust_mouse_tex["blank"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/blank_cursor.png")
         self.cust_mouse_tex["main"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/main_cursor.png")
         self.alghtnode = AmbientLight("ambient light"); self.alghtnode.setColor(Vec4(0.4,0.4,0.4,1))
-        self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(0,0,0,0.8)); self.voile.setBin("gui-popup",1); self.voile.hide()
+        self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(1,1,1,0.7)); self.voile.setBin("gui-popup",1); self.voile.hide()
         cust_path = ("" if base.appRunner else "mainscene/models/")
         self.arrow_mod = loader.loadModel(cust_path+"statics/arrow")
         self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1,1,-0.8,0.6)
@@ -48,29 +48,59 @@ class ArcnsApp(DirectObject):
     def change_cursor(self,chx):
         self.cust_mouse.setTexture(self.cust_mouse_tex[chx])
     def arcButton(self,txt,pos,cmd,scale=0.08,txtalgn=TextNode.ALeft,extraArgs=[]): #override button
-        ndp = DirectButton(text=txt,scale=scale,text_font=self.arcFont,pos=pos,text_bg=(1,1,1,0.8),relief=None,text_align=txtalgn,extraArgs=extraArgs)
+        ndp = DirectButton(text=txt,scale=scale,text_font=self.arcFont,pos=pos,text_shadow=(0,0.5,1,0.8),
+            relief=None,text_align=txtalgn,extraArgs=extraArgs,text_shadowOffset=(0.07,0.07))
         ndp._DirectGuiBase__componentInfo["text2"][0].setFg((0.03,0.3,0.8,1))
         ndp._DirectGuiBase__componentInfo["text3"][0].setFg((0.3,0.3,0.3,1))
         ndp["command"] = cmd; return ndp
     def arcLabel(self,txt,pos,scale=0.08,txtalgn=TextNode.ALeft): #override label
-        ndp = DirectLabel(text=txt,scale=scale,pos=pos,text_bg=(1,1,1,0.8),relief=None,text_font=self.arcFont,text_align=txtalgn)
+        ndp = DirectLabel(text=txt,scale=scale,pos=pos,relief=None,text_font=self.arcFont,text_align=txtalgn,
+            text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07))
         return ndp
-    def arcOptMenu(self,txt,pos,items,init=0,cmd=None,scale=0.08,change=1,txtalgn=TextNode.ALeft,extraArgs=[]):
+    def arcOptMenu(self,txt,pos,items,init=0,cmd=None,scale=0.08,change=1,txtalgn=TextNode.ALeft,extraArgs=[]): # override options menu
         ndp = DirectOptionMenu(text=txt,scale=scale,pos=pos,items=items,initialitem=init,textMayChange=change,text_font=self.arcFont,
-            text_align=txtalgn,text_bg=(1,1,1,0.8),relief=None,highlightColor=(0.03,0.3,0.8,1),popupMarker_relief=None,
-            popupMarker_pos=(0,0,0),popupMarkerBorder=(0,0),item_text_font=self.arcFont,extraArgs=extraArgs)
+            text_align=txtalgn,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),popupMarker_scale=1.4,popupMarker_frameColor=(1,1,1,0.8),
+            relief=None,highlightColor=(0.02,0.5,1,0.8),popupMarker_relief=DGG.RIDGE,item_frameColor=(1,1,1,0.7),item_relief=DGG.RIDGE,
+            popupMarker_pos=(0,0,0),popupMarkerBorder=(0.5,0.5),item_text_font=self.arcFont,extraArgs=extraArgs)
         ndp["command"] = cmd; return ndp
     def arcRadioButton(self,lst_rad,parent,gui,scale=0.08,txtalgn=TextNode.ALeft): #override radio button
         lst_radio = []
         for elt in lst_rad:
-            ndp = DirectRadioButton(text=elt[0],variable=elt[1],value=elt[2],extraArgs=elt[4],
-                text_align=txtalgn,scale=scale,pos=elt[5],text_font=self.arcFont,text_bg=(1,1,1,0.8),relief=None)
-            ndp["command"] = elt[3],; lst_radio.append(ndp)
-        for elt in lst_radio:
-            elt.setOthers(lst_radio); elt.reparentTo(parent); gui.append(elt)
-    def arcEntry(self,pos,txt="",cmd=None,scale=0.08,nlines=1): #override entry
-        ndp = DirectEntry(pos=pos,text=txt,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
+            ndp = DirectRadioButton(text=elt[0],variable=elt[1],value=elt[2],extraArgs=elt[4],text_shadowOffset=(0.07,0.07),
+                boxImageColor=(1,1,1,0.8),text_align=txtalgn,scale=scale,boxBorder=0.2,
+                pos=elt[5],text_font=self.arcFont,text_shadow=(0,0.5,1,0.8),relief=None)
+            ndp["command"] = elt[3]; ndp.reparentTo(parent); gui[elt[6]] = ndp; lst_radio.append(ndp)
+        for elt in lst_radio: elt.setOthers(lst_radio)
+    def arcCheckButton(self,txt,pos,cmd,scale=0.08,boxplct="left",txtalgn=TextNode.ALeft,extraArgs=[]): #override check button
+        ndp = DirectCheckButton(text=txt,scale=scale,pos=pos,text_font=self.arcFont,text_align=txtalgn,relief=None,
+            boxRelief=DGG.RIDGE,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),boxPlacement=boxplct,extraArgs=extraArgs)
         ndp["command"] = cmd; return ndp
+    def arcEntry(self,pos,txt="",cmd=None,scale=0.08,nlines=1): #override entry
+        ndp = DirectEntry(pos=pos,initialText=txt,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
+        ndp["command"] = cmd; return ndp
+    def arcSlider(self,pos,scale=1,inter=(0,100),initVal=50,pas=1,cmd=None,orient=DGG.HORIZONTAL): #override slider
+        calc_size = None; calc_text = None; calc_pos = None
+        if orient == DGG.HORIZONTAL:
+            calc_size = (scale*-0.5,scale*0.5,scale*0.1,scale*-0.1); calc_text = "|"; calc_pos = (0,scale*-0.033-0.0035)
+        elif orient == DGG.VERTICAL:
+            calc_size = (scale*-0.1,scale*0.1,scale*0.5,scale*-0.5); calc_text = "_"; calc_pos = (-0.01*scale,0)
+        ndp = DirectSlider(pos=pos,range=inter, value=initVal, pageSize=pas,orientation=orient,frameColor=(0,0.5,1,1),
+            frameSize=calc_size,thumb_relief=DGG.RIDGE,thumb_text=calc_text,thumb_text_scale=scale*0.12,
+            thumb_text_fg=(1,1,1,1),thumb_borderWidth=(0.01,0.01),thumb_text_pos=calc_pos,thumb_frameColor=(1,1,1,1))
+    	ndp["command"] = cmd; return ndp
+    def arcScrollBar(self,pos,scale=1,inter=(0,1),val=0.5,pas=0.1,cmd=None,orient=DGG.HORIZONTAL): #override scrollbar
+        ndp = DirectScrollBar(pos=pos,range=inter,value=val,pageSize=pas,orientation=orient,frameColor=(0,0.5,1,1),
+            thumb_relief=DGG.RIDGE,thumb_borderWidth=(0.01,0.01),decButton_relief=DGG.RIDGE,incButton_relief=DGG.RIDGE,
+            thumb_frameColor=(1,1,1,1),decButton_frameColor=(1,1,1,1),incButton_frameColor=(1,1,1,1),
+            decButton_borderWidth=(0.01,0.01),incButton_borderWidth=(0.01,0.01),decButton_text="-",incButton_text="+",
+            decButton_text_scale=scale*0.12,incButton_text_scale=scale*0.12,scale=scale,
+            decButton_text_pos=(-0.005*scale,-0.025*scale),incButton_text_pos=(-0.005*scale,-0.02*scale))
+        ndp["command"] = cmd; return ndp
+    def arcWaitBar(self,pos,scale=1,range=100,val=50,text=""):
+        ndp = DirectWaitBar(pos=pos,text=text,range=range,value=val,scale=scale,text_font=self.arcFont,
+            text_shadow=(1,1,1,0.8),text_shadowOffset=(0.07,0.07),relief=DGG.RIDGE,barRelief=DGG.RIDGE,
+            barBorderWidth=(0.01,0.01),borderWidth=(0.01,0.01),frameColor=(1,1,1,1),barColor=(0,0.5,1,1))
+        return ndp
     def main_screen(self):
         self.scene.close(); self.scene = None; self.clearScreen()
         wp = WindowProperties()

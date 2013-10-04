@@ -241,6 +241,8 @@ class mainScene(FSM,DirectObject):
                     self.dic_anims["move_texts"].append(tmp_anim)
                 self.dic_dynamics["arcs_main_menu"].play("state_"+str(self.states["main_chx"]+(1 if sens else -1))+"_"+str(self.states["main_chx"]))
                 self.nomove = False; self.dic_anims["move_texts"].start(); taskMgr.doMethodLater(0.4,self.reactiveMainMenu,"reactive MainMenu")
+            else:
+                self.dic_gui["main_menu"][self.states["main_lst"][self.states["main_chx"]]]["state"] = DGG.NORMAL
         elif value == "valid":
             self.ignoreAll(); self.accept("escape",sys.exit,[0]); self.nomove = False
             if self.states["main_chx"] == 0:
