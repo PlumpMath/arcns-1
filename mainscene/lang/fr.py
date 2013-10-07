@@ -26,13 +26,20 @@ fr_lang = {
         "stitre":"Missions :"
     },
     "credits_menu":{
-        "stitre":"Crédits :"
+        "stitre":"Crédits :",
+        "graph_lab":"Graphisme :",
+        "graph_name":"othelarian\ntest1\ntest23",
+        "dev_lab":"Développement :",
+        "dev_name":"othelarian",
+        "trad_lab":"Traduction :",
+        "trad_name":"othelarian",
+        "music_lab":"Musique et sons :",
+        "music_name":"othelarian\nCap"
     },
     "option_menu":{
         "stitre":"Options :",
         "windowed":" : Mode fenêtré",
         "fullscreen":" : Plein écran",
-        "res_chx":"Résolution :",
         "lang_chx":"Langue :",
         "btn_valid":"Valider",
         "btn_reset":"Annuler",

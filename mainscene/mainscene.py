@@ -90,55 +90,83 @@ class mainScene(FSM,DirectObject):
         tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["quit"],(-0.41,0,-0.66),self.actionMainMenu,scale=0.05)
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
         self.dic_gui["main_menu"]["quit"] = tmp_gui; self.states["main_lst"].append("quit")
-        #
-        # DEBUG : zone de création d'éléments gui temporaires
-        #tmp_gui
-        ###
-        #
         #camp_menu
         #
-        tmp_frame = DirectFrame(); tmp_frame.hide();
+        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["camp_menu"]["frame"] = tmp_frame
         #
-        self.dic_gui["camp_menu"]["frame"] = tmp_frame
-        #
-        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["stitre"],(-0.7,0,0.5),0.15); tmp_gui.reparentTo(tmp_frame)
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["camp_menu"]["stitre"] = tmp_gui
         #
         # TODO : éléments gui pour le camp_menu à construire ici
         #
         #mission_menu
+        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["mission_menu"]["frame"] = tmp_frame
+        tmp_gui = self.app.arcLabel(self.app.speak["mission_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["mission_menu"]["stitre"] = tmp_gui
         #
         # TODO : éléments gui pour le mission_menu à construire ici
         #
+        # DEBUG : label temporaire "W.I.P." pour le sous menu "Missions"
+        tmp_gui = self.app.arcLabel("W.I.P.",(0,0,0),0.2); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["mission_menu"]["wip"] = tmp_gui
+        ###
+        #
         #credits_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["credits_menu"]["frame"] = tmp_frame
-        #
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["stitre"],(-0.7,0,0.5),0.15); tmp_gui.reparentTo(tmp_frame)
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["credits_menu"]["stitre"] = tmp_gui
-        #
-        # TODO : éléments gui pour le credits_menu à construire ici
-        #
-        #
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["graph_lab"],(-0.5,0,0.4),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["graph_lab"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["graph_name"],(-0.5,0,0.3),txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["graph_name"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["dev_lab"],(0.5,0,0.4),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["dev_lab"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["dev_name"],(0.5,0,0.3),txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["dev_name"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["trad_lab"],(-0.5,0,-0.1),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["trad_lab"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["trad_name"],(-0.5,0,-0.2),txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["trad_name"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["music_lab"],(0.5,0,-0.1),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["music_lab"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["music_name"],(0.5,0,-0.2),txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["music_name"] = tmp_gui
         #option_menu
-        #
-        # TODO : éléments gui pour le option_menu à construire ici
-        #
-        tmp_frame = DirectFrame()#; tmp_frame.hide();
-        #
-        self.dic_gui["option_menu"]["frame"] = tmp_frame
-        #
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["stitre"],(-0.7,0,0.5),0.15); tmp_gui.reparentTo(tmp_frame)
+        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["option_menu"]["frame"] = tmp_frame
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["option_menu"]["stitre"] = tmp_gui
+        #
+        # TODO : boutons radio pour le fullscreen
+        #
+        lsr_radio = [
+            [],
+            []
+        ]
+        #
+        #self.app.arcRadioButton(lst_radio,)
+        #arcRadioButton(self,lst_rad,parent,gui,scale=0.08,txtalgn=TextNode.ALeft)
+        #
+        # TODO : option menu opur la langue
+        #
+        # TODO : boutons et sliders pour les sons et la musique
+        #
+        # TODO : formulaire pour les mises à jour
+        #
+        # TODO : boutons de validation ou d'annulation
+        #
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_valid"],(0,0,0),None)
+        #
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_valid"] = tmp_gui
+        #
+        #
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_reset"],(0.5,0,0),None)
+        #
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_reset"] = tmp_gui
         #
         #aux_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["aux_menu"]["frame"] = tmp_frame
-        #
-        # TODO : fonction de retour au menu principal à rattacher au bouton
-        #
-        tmp_gui = self.app.arcButton(self.app.speak["aux_menu"]["return_btn"],(0,0,-0.7),None)
-        #
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["aux_menu"]["return_btn"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["aux_menu"]["return_btn"],(0,0,-0.7),self.actionSubMenu,extraArgs=["quit"])
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["aux_menu"]["return_btn"] = tmp_gui
     def loadmodels(self):
         #arrows & cards
         arr_up = render.attachNewNode("main arrow up"); arr_up.setHpr(0,90,0); arr_up.setPos(6.2,1.5,7.3); arr_up.hide()
@@ -186,14 +214,9 @@ class mainScene(FSM,DirectObject):
         self.dic_anims["cam_move_maintosub"] = Parallel(name="main to sub")
         self.dic_anims["cam_move_maintosub"].append(camera.posInterval(2,Point3(-4,-1,7)))
         self.dic_anims["cam_move_maintosub"].append(camera.hprInterval(2,Point3(-90,-10,0)))
-        #
-        # TODO : animation de la camera depuis un sub_menu vers le main_menu
-        #
         self.dic_anims["cam_move_subtomain"] = Parallel(name="sub to main")
-        #
-        #self.dic_anims["cam_move_subtomain"].append()
-        #
-        #self.dic_anims["cam_move_subtomain"].append()
+        self.dic_anims["cam_move_subtomain"].append(camera.posInterval(2,Point3(0,-25,12)))
+        self.dic_anims["cam_move_subtomain"].append(camera.hprInterval(2,Point3(0,-10,0)))
         #
         # TODO : suite des animations à charger
         #
@@ -305,9 +328,7 @@ class mainScene(FSM,DirectObject):
         self.dic_arrows["arrow_up"]["status"] = 0; self.dic_arrows["arrow_dn"]["status"] = 0
         self.dic_arrows["arrow_up"]["node"].hide(); self.dic_arrows["arrow_dn"]["node"].hide()
         self.dic_anims["cam_move_maintosub"].start()
-        #
-        # TODO : animation des cercles du SubMenu state
-        #
+        taskMgr.doMethodLater(1,self.subArcsTask,"anim aux arcs task")
         taskMgr.doMethodLater(2.5,self.goSubMenuTask,"aff sub menu task")
     def goSubMenuTask(self,task):
         self.request("SubMenu"); return task.done
@@ -315,13 +336,13 @@ class mainScene(FSM,DirectObject):
     Méthodes pour l'état "SubMenu"
     **************************** """
     def enterSubMenu(self):
-        frame = None
+        self.app.change_cursor("main"); frame = None
         if self.states["main_chx"] == 0: frame = "camp_menu"
         elif self.states["main_chx"] == 1: frame = "mission_menu"
         elif self.states["main_chx"] == 2: frame = "credits_menu"
         elif self.states["main_chx"] == 3: frame = "option_menu"
         self.dic_gui[frame]["frame"].show(); self.dic_gui["aux_menu"]["frame"].show()
-        self.dic_gui["aux_menu"]["return_btn"]["state"] = DGG.ENABLED
+        self.dic_gui["aux_menu"]["return_btn"]["state"] = DGG.NORMAL
         #
         # TODO : mise en place des interactions
         #
@@ -330,6 +351,26 @@ class mainScene(FSM,DirectObject):
     def exitSubMenu(self):
         pass
     def actionSubMenu(self,value):
+        if value == "quit":
+            self.app.change_cursor("blank"); frame = None
+            if self.states["main_chx"] == 0: frame = "camp_menu"
+            elif self.states["main_chx"] == 1: frame = "mission_menu"
+            elif self.states["main_chx"] == 2: frame = "credits_menu"
+            elif self.states["main_chx"] == 3: frame = "option_menu"
+            self.dic_gui[frame]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
+            self.ignoreAll(); self.accept("escape",sys.exit,[0])
+            self.dic_anims["cam_move_subtomain"].start()
+            taskMgr.doMethodLater(1,self.subArcsTask,"anim aux arcs task")
+            taskMgr.doMethodLater(2.5,self.goMainMenuTask,"aff main menu task")
+        #
+        elif value == "value":
+            #
+            #
+            #
+            pass
+        #
+        # TODO : reste des actions ici
+        #
         #
         print value
         #
@@ -340,20 +381,12 @@ class mainScene(FSM,DirectObject):
         print tkFileDialog.askdirectory()
         """
         #
-        if value == "quit":
-            #
-            # TODO : retour au meu principal
-            #
-            self.ignoreAll(); self.accept("escape",sys.exit,[0])
-            #
-            # TODO : lancement de l'animation
-            #
-            #
-        #
-        # TODO : reste des actions ici
-        #
-        def goMainMenuTask(self,task):
-            self.request("MainMenu"); return task.done
+    def goMainMenuTask(self,task):
+        self.request("MainMenu"); return task.done
+    def subArcsTask(self,task):
+        if self.state == "MainMenu": self.dic_dynamics["arcs_aux_menu"].play("load")
+        elif self.state == "SubMenu": self.dic_dynamics["arcs_aux_menu"].play("unload")
+        return task.done
     """ ****************************
     Méthodes pour la sortie du menu principal
     **************************** """
@@ -394,14 +427,8 @@ class mainScene(FSM,DirectObject):
         for key in self.dic_dynamics: self.dic_dynamics[key].delete()
         for key in self.dic_sounds:
             self.dic_sounds[key].stop(); self.dic_sounds[key] = None
-        #
-        # TODO : clean de la musique
-        #
         for key in self.dic_musics:
             self.dic_musics[key].stop(); self.dic_musics[key] = None
-        #
-        # TODO : arrêt de la musique
-        #
         self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
         self.dic_sounds = None; self.dic_musics = None
         self.vers_txt.removeNode()
