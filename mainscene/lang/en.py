@@ -5,7 +5,7 @@ en_lang = {
     "main_menu":{
         "campaign":"Campaign",
         "mission":"Missions",
-        "maj":"Update",
+        "credits":"Credits",
         "options":"Options",
         "quit":"Quit"
     },
@@ -25,11 +25,8 @@ en_lang = {
     "mission_menu":{
         "stitre":"Missions :"
     },
-    "maj_menu":{
-        "stitre":"Update :",
-        "verify":"Check for update",
-        "cancel":"Cancel",
-        "doit":"Do update"
+    "credits_menu":{
+        "stitre":"Credits :"
     },
     "option_menu":{
         "stitre":"Options :",
@@ -38,6 +35,10 @@ en_lang = {
         "res_chx":"Resolution :",
         "lang_chx":"Language :",
         "btn_valid":"Accept",
-        "btn_reset":"Cancel"
+        "btn_reset":"Cancel",
+        "maj_verify":"Check for\nupdate",
+        "maj_cancel":"Cancel",
+        "maj_progress":"Checking ...",
+        "maj_doit":"Do update"
     }
 }

@@ -5,7 +5,7 @@ fr_lang = {
     "main_menu":{
         "campaign":"Campagne",
         "mission":"Missions",
-        "maj":"Mettre à jour",
+        "credits":"Crédits",
         "options":"Options",
         "quit":"Quitter"
     },
@@ -25,11 +25,8 @@ fr_lang = {
     "mission_menu":{
         "stitre":"Missions :"
     },
-    "maj_menu":{
-        "stitre":"Mise à jour :",
-        "verify":"Vérifier les mises à jour",
-        "cancel":"Annuler",
-        "doit":"Mettre à jour"
+    "credits_menu":{
+        "stitre":"Crédits :"
     },
     "option_menu":{
         "stitre":"Options :",
@@ -38,6 +35,10 @@ fr_lang = {
         "res_chx":"Résolution :",
         "lang_chx":"Langue :",
         "btn_valid":"Valider",
-        "btn_reset":"Annuler"
+        "btn_reset":"Annuler",
+        "maj_verify":"Vérifier les\nmises à jour",
+        "maj_cancel":"Annuler",
+        "maj_progress":"Vérification en cours ...",
+        "maj_doit":"Mettre à jour"
     }
 }

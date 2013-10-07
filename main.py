@@ -27,7 +27,7 @@ class ArcnsApp(DirectObject):
         self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(1,1,1,0.7)); self.voile.setBin("gui-popup",1); self.voile.hide()
         cust_path = ("" if base.appRunner else "mainscene/models/")
         self.arrow_mod = loader.loadModel(cust_path+"statics/arrow")
-        self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1,1,-0.8,0.6)
+        self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1.1,1,-0.8,0.8); self.card_arrow.setColor(1,0,0,1)
         self.mouse_trav = CollisionTraverser(); self.mouse_hand = CollisionHandlerQueue()
         self.pickerNode = CollisionNode("mouseRay"); self.pickerNP = camera.attachNewNode(self.pickerNode)
         self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
@@ -47,9 +47,9 @@ class ArcnsApp(DirectObject):
         self.pickly_node = render.attachNewNode("pickly_node")
     def change_cursor(self,chx):
         self.cust_mouse.setTexture(self.cust_mouse_tex[chx])
-    def arcButton(self,txt,pos,cmd,scale=0.08,txtalgn=TextNode.ALeft,extraArgs=[]): #override button
+    def arcButton(self,txt,pos,cmd,scale=0.08,txtalgn=TextNode.ALeft,extraArgs=[],sound=None): #override button
         ndp = DirectButton(text=txt,scale=scale,text_font=self.arcFont,pos=pos,text_shadow=(0,0.5,1,0.8),
-            relief=None,text_align=txtalgn,extraArgs=extraArgs,text_shadowOffset=(0.07,0.07))
+            relief=None,text_align=txtalgn,extraArgs=extraArgs,text_shadowOffset=(0.07,0.07),clickSound=sound)
         ndp._DirectGuiBase__componentInfo["text2"][0].setFg((0.03,0.3,0.8,1))
         ndp._DirectGuiBase__componentInfo["text3"][0].setFg((0.3,0.3,0.3,1))
         ndp["command"] = cmd; return ndp
