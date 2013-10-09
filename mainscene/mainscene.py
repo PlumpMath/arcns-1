@@ -22,7 +22,7 @@ class mainScene(FSM,DirectObject):
         if exists(self.app.curdir+"/config.json"):
             self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file(self.app.curdir+"/config.json","rb")]))
         else:
-            self.app.main_config = {"fullscreen": false, "lang_chx": 0,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
+            self.app.main_config = {"fullscreen": False, "lang_chx": 0,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
             try:
             	mcf = open(self.app.curdir+"/config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
             except Exception,e: print e
@@ -34,6 +34,8 @@ class mainScene(FSM,DirectObject):
         # TODO : ajout dans self.states de la gestion des options
         #
         self.states = {"main_chx":0,"main_lst":[]}
+        #
+        self.options = {"fullscreen":[self.app.main_config["fullscreen"]],"lang_chx":self.app.main_config["lang_chx"]}
         #
         # DEBUG : commande pour les tests
         self.accept("d",self.app.game_screen)
@@ -52,19 +54,18 @@ class mainScene(FSM,DirectObject):
         #
         self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
     def loadSfx(self):
-        self.dic_sounds["main_menu_sel"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/")+"sounds/son_main_menu_sel.wav")
-        self.dic_sounds["main_menu_switch"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/")+"sounds/son_main_menu_main.wav")
-        #
-        # TODO : chargemetn des sons
-        #
+        self.dic_sounds["main_menu_sel"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_sel.wav")
+        self.dic_sounds["main_menu_switch"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_main.wav")
+        self.dic_sounds["main_menu_escape"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_aux.wav")
         for key in self.dic_sounds: self.dic_sounds[key].setVolume(self.app.main_config["sounds_vol"])
     def loadMusics(self):
         #
         # TODO : changer le ".mp3" par ".wav" dès que la musique sera prête
         #
-        self.dic_musics["mainscene_music"] = base.loader.loadMusic(("" if base.appRunner else "mainscene/")+"musics/main_music.mp3")
+        self.dic_musics["mainscene_music"] = base.loader.loadMusic(("" if base.appRunner else "mainscene/musics/")+"main_music.mp3")
         #
         self.dic_musics["mainscene_music"].setVolume(self.app.main_config["music_vol"])
+    # NOTE : cette méthode est temporaire, et sera à terme remplacer par l'outils de parsing des scènes
     def activeLights(self):
         tmp_node = DirectionalLight("dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))
         tmp_lght = render.attachNewNode(tmp_node); tmp_lght.setHpr(0,-70,0); render.setLight(tmp_lght); self.dic_lights["dir_top"] = tmp_lght
@@ -135,37 +136,70 @@ class mainScene(FSM,DirectObject):
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["option_menu"]["frame"] = tmp_frame
         tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["option_menu"]["stitre"] = tmp_gui
-        #
-        # TODO : boutons radio pour le fullscreen
-        #
-        lsr_radio = [
-            [],
-            []
+        lst_radio = [
+            [self.app.speak["option_menu"]["windowed"],self.options["fullscreen"],[False],
+                self.actionSubMenu,["","change_opt","win"],(-1,0,0.4),"windowed"],
+            [self.app.speak["option_menu"]["fullscreen"],self.options["fullscreen"],[True],
+                self.actionSubMenu,["","change_opt","win"],(-1,0,0.3),"fullscreen"]
         ]
+        self.app.arcRadioButton(lst_radio,tmp_frame,self.dic_gui["option_menu"])
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["lang_chx"],(-1.05,0,0.15)); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["option_menu"]["lang_chx"] = tmp_gui
+        txt = None
+        if self.options["lang_chx"] == 0: "Français"
+        elif self.options["lang_chx"] == 1: "English"
+        tmp_gui = self.app.arcOptMenu(txt,(-0.45,0,0.15),["Français","English"],self.options["lang_chx"],
+            self.actionSubMenu,extraArgs=["change_opt","lang"])
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["lang_opt"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["music_vol"],(-1.05,0,-0.2)); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["option_menu"]["music_vol"] = tmp_gui
         #
-        #self.app.arcRadioButton(lst_radio,)
-        #arcRadioButton(self,lst_rad,parent,gui,scale=0.08,txtalgn=TextNode.ALeft)
+        # TODO : mise en place des interactions avec la checkbox music mute
         #
-        # TODO : option menu opur la langue
+        tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["music_mute"],(0.3,0,-0.2),None)
         #
-        # TODO : boutons et sliders pour les sons et la musique
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["music_mute"] = tmp_gui
         #
-        # TODO : formulaire pour les mises à jour
+        # TODO : mise en place du slider pour le volume de la musique
         #
-        # TODO : boutons de validation ou d'annulation
+        tmp_gui = self.app.arcSlider((-0.3,0,-0.3))
         #
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_valid"],(0,0,0),None)
+        tmp_gui.reparentTo(tmp_frame)
         #
+        self.dic_gui["option_menu"]["music_slider"] = tmp_gui
+        #
+        #
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["sound_vol"],(-1.05,0,-0.5)); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["option_menu"]["sound_vol"] = tmp_gui
+        #
+        # TODO : mise en place des interactions avec la checkbox sounds mute
+        #
+        tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["sound_mute"],(0.3,0,-0.5),None)
+        #
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_mute"] = tmp_gui
+        #
+        # TODO : insertion du slider pour le volume des effets sonores
+        #
+        tmp_gui = self.app.arcSlider((-0.3,0,-0.6))
+        #
+        tmp_gui.reparentTo(tmp_frame)
+        #
+        self.dic_gui["option_menu"]["sound_slider"] = tmp_gui
+        #
+        # TODO : bouton pour lancer la vérification des mises à jour
+        #
+        #self.app.arcButton()
+        #
+        # TODO : formulaire pour les mises à jours
+        #
+        #
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_valid"],(-0.9,0,-0.8),self.actionSubMenu,extraArgs=["valid_opt"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_valid"] = tmp_gui
-        #
-        #
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_reset"],(0.5,0,0),None)
-        #
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_reset"],(-0.5,0,-0.8),self.actionSubMenu,extraArgs=["cancel_opt"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_reset"] = tmp_gui
-        #
         #aux_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["aux_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcButton(self.app.speak["aux_menu"]["return_btn"],(0,0,-0.7),self.actionSubMenu,extraArgs=["quit"])
+        tmp_gui = self.app.arcButton(self.app.speak["aux_menu"]["return_btn"],(0,0,-0.8),self.actionSubMenu,extraArgs=["quit"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["aux_menu"]["return_btn"] = tmp_gui
     def loadmodels(self):
         #arrows & cards
@@ -183,6 +217,7 @@ class mainScene(FSM,DirectObject):
         #
         # TODO : flèches pour les différents sous-menus à construire ici
         #
+        # NOTE : toutes la partie entre ### est temporaire, en attente que le module de parsing fonctionne
         #gates and moving arcs
         tmp_mod = Actor(self.cust_path+"dynamics/main_gates"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,-48.2,9.5); tmp_mod.setHpr(0,80,0); self.dic_dynamics["gates"] = tmp_mod
@@ -198,13 +233,9 @@ class mainScene(FSM,DirectObject):
         tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_arcs_show"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,7.3,3); self.dic_statics["arcs_shower"] = tmp_mod
         #
-        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_title"); tmp_mod.reparentTo(render); self.dic_statics["arc_title"] = tmp_mod
-        #
-        #
-        #self.dic_dynamics["screens"] = None ####
-        #self.dic_dynamics["persos_anims"] = None ####
-        #
-        # TODO : il ne manque que les écrans et les animations des personnages
+        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_title"); tmp_mod.reparentTo(render)
+        self.dic_statics["arc_title"] = tmp_mod
+        ###
         #
     def activeAnim(self):
         tmp_anim = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
@@ -350,8 +381,9 @@ class mainScene(FSM,DirectObject):
         #
     def exitSubMenu(self):
         pass
-    def actionSubMenu(self,value):
-        if value == "quit":
+    def actionSubMenu(self,val1,val2=None,val3=None):
+        if val1 == "quit":
+            self.dic_sounds["main_menu_escape"].play()
             self.app.change_cursor("blank"); frame = None
             if self.states["main_chx"] == 0: frame = "camp_menu"
             elif self.states["main_chx"] == 1: frame = "mission_menu"
@@ -362,17 +394,39 @@ class mainScene(FSM,DirectObject):
             self.dic_anims["cam_move_subtomain"].start()
             taskMgr.doMethodLater(1,self.subArcsTask,"anim aux arcs task")
             taskMgr.doMethodLater(2.5,self.goMainMenuTask,"aff main menu task")
-        #
-        elif value == "value":
             #
+            # TODO : remise à zéro des options
             #
+        elif val1 == "cancel_opt":
+            #
+            # TODO : annulation des modifications des options
             #
             pass
+        elif val1 == "valid_opt":
+            #
+            # TODO : validation des modifications des options
+            #
+            pass
+        elif val2 == "change_opt":
+            #
+            # TODO : changement des options
+            #
+            if val3 == "win": pass
+            elif val3 == "lang":
+                #
+                # TODO : changement de l'option "lang_chx" dans l'attribut des options temporaires
+                #
+                pass
+            #
+            # TODO : vérification au niveau des options sauvegardées et des options temporaire
+            #
         #
         # TODO : reste des actions ici
         #
         #
-        print value
+        print "val1 : "+str(val1)
+        print "val2 : "+str(val2)
+        print "val3 : "+str(val3)
         #
         # NOTE : code pour l'import et l'export
         """   Tkinter open filepicker and dirpicker
@@ -393,6 +447,8 @@ class mainScene(FSM,DirectObject):
     def launchGame(self):
         #
         # TODO : lancement du jeu. Ce n'est pas un changement de state, c'est une exécution de méthode simple, avec des tasks
+        #
+        # TODO : modification de self.app.speak, pour prendre le bon fichier de traduction pour l'ensemble du jeu dans le package de la gamescene
         #
         # TODO : animation de sortie du menu principal
         #

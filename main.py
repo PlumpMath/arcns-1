@@ -13,6 +13,7 @@ from pandac.PandaModules import TransparencyAttrib
 from mainscene.mainscene import mainScene
 from persoscene.persoscene import persoScene
 from gamescene.gamescene import gameScene
+from arcstools.arcstools import arcsTools
 
 import direct.directbase.DirectStart
 
@@ -33,7 +34,7 @@ class ArcnsApp(DirectObject):
         self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
         self.pickerNode.addSolid(self.pickerRay); self.mouse_trav.addCollider(self.pickerNP,self.mouse_hand)
         self.curdir = (base.appRunner.p3dFilename.getDirname() if base.appRunner else ".")
-        self.initScreen(); self.change_cursor("blank"); self.transit = None
+        self.tools = arcsTools(); self.initScreen(); self.change_cursor("blank"); self.transit = None
         self.main_config = None; self.speak = None; self.scene = mainScene(self); self.scene.request("Init")
     	base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
     def clearScreen(self):
@@ -59,7 +60,7 @@ class ArcnsApp(DirectObject):
         return ndp
     def arcOptMenu(self,txt,pos,items,init=0,cmd=None,scale=0.08,change=1,txtalgn=TextNode.ALeft,extraArgs=[]): # override options menu
         ndp = DirectOptionMenu(text=txt,scale=scale,pos=pos,items=items,initialitem=init,textMayChange=change,text_font=self.arcFont,
-            text_align=txtalgn,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),popupMarker_scale=1.4,popupMarker_frameColor=(1,1,1,0.8),
+            text_align=txtalgn,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),popupMarker_scale=1.4,popupMarker_frameColor=(1,1,1,1),
             relief=None,highlightColor=(0.02,0.5,1,0.8),popupMarker_relief=DGG.RIDGE,item_frameColor=(1,1,1,0.7),item_relief=DGG.RIDGE,
             popupMarker_pos=(0,0,0),popupMarkerBorder=(0.5,0.5),item_text_font=self.arcFont,extraArgs=extraArgs)
         ndp["command"] = cmd; return ndp
@@ -122,5 +123,7 @@ class ArcnsApp(DirectObject):
         base.openMainWindow(wp,makeCamera=False,keepCamera=True)
         self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
+    def crea_persoscene(self):
+        return persoScene()
 
 app = ArcnsApp(); run()

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from direct.showbase.DirectObject import DirectObject
-from direct.fsm.FSM import FSM
+
+# NOTE : vérifier l'utilité d'utiliser une FSM pour persoScene
+#from direct.fsm.FSM import FSM
+###
 
 # TODO : dimension si externe : 400x600
 
@@ -10,4 +13,5 @@ class persoScene:
         #
         # TODO : tout reste à faire
         #
-        pass
+        print "init de persoScene *******"
+        #

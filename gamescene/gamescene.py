@@ -31,6 +31,9 @@ class gameScene(FSM,DirectObject):
         tmp_node = DirectionalLight("test_dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))
         self.tmp_lght = render.attachNewNode(tmp_node); self.tmp_lght.setHpr(0,-70,0); render.setLight(self.tmp_lght)
         #
+        # DEBUG : test de l'appel pour la création d'une persoscene
+        #perso = self.app.crea_persoscene()
+        ###
         #
         #
     """ ****************************
