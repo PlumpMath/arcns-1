@@ -8,12 +8,20 @@ from direct.showbase.DirectObject import DirectObject
 from direct.gui.DirectGui import *
 from panda3d.core import Vec4, TextNode, CardMaker, NodePath, PandaNode, AmbientLight, WindowProperties
 from panda3d.core import CollisionTraverser, CollisionNode, CollisionHandlerQueue, CollisionRay, BitMask32
+#
+# DEBUG : cette ligne doit être vérifiée
+from panda3d.core import Multifile, VirtualFileSystem, Filename
+#
 from pandac.PandaModules import TransparencyAttrib
 
-from mainscene.mainscene import mainScene
-from persoscene.persoscene import persoScene
-from gamescene.gamescene import gameScene
-from arcstools.arcstools import arcsTools
+# TODO : suppression des imports, à remplacer par le chargement des multifiles
+
+###
+#from mainscene.mainscene import mainScene
+#from persoscene.persoscene import persoScene
+#from gamescene.gamescene import gameScene
+#from arcstools.arcstools import arcsTools
+###
 
 import direct.directbase.DirectStart
 
@@ -24,6 +32,15 @@ class ArcnsApp(DirectObject):
         self.cust_mouse_tex = {}
         self.cust_mouse_tex["blank"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/blank_cursor.png")
         self.cust_mouse_tex["main"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/main_cursor.png")
+        #
+        self.change_cursor("blank")
+        #
+        #
+        # TODO : vérification des multifiles, et download s'ils ne sont pas présent
+        #
+        # TODO : interface pour le téléchargement des multifiles
+        #
+        #
         self.alghtnode = AmbientLight("ambient light"); self.alghtnode.setColor(Vec4(0.4,0.4,0.4,1))
         self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(1,1,1,0.7)); self.voile.setBin("gui-popup",1); self.voile.hide()
         cust_path = ("" if base.appRunner else "mainscene/models/")
@@ -34,7 +51,7 @@ class ArcnsApp(DirectObject):
         self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
         self.pickerNode.addSolid(self.pickerRay); self.mouse_trav.addCollider(self.pickerNP,self.mouse_hand)
         self.curdir = (base.appRunner.p3dFilename.getDirname() if base.appRunner else ".")
-        self.tools = arcsTools(); self.initScreen(); self.change_cursor("blank"); self.transit = None
+        self.tools = arcsTools(); self.initScreen(); self.transit = None
         self.main_config = None; self.speak = None; self.scene = mainScene(self); self.scene.request("Init")
     	base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
     def clearScreen(self):
@@ -72,14 +89,16 @@ class ArcnsApp(DirectObject):
                 pos=elt[5],text_font=self.arcFont,text_shadow=(0,0.5,1,0.8),relief=None)
             ndp["command"] = elt[3]; ndp.reparentTo(parent); gui[elt[6]] = ndp; lst_radio.append(ndp)
         for elt in lst_radio: elt.setOthers(lst_radio)
-    def arcCheckButton(self,txt,pos,cmd,scale=0.08,boxplct="left",txtalgn=TextNode.ALeft,extraArgs=[]): #override check button
+    def arcCheckButton(self,txt,pos,cmd,val=0,scale=0.08,boxplct="left",txtalgn=TextNode.ALeft,extraArgs=[]): #override check button
         ndp = DirectCheckButton(text=txt,scale=scale,pos=pos,text_font=self.arcFont,text_align=txtalgn,relief=None,
-            boxRelief=DGG.RIDGE,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),boxPlacement=boxplct,extraArgs=extraArgs)
+            boxRelief=DGG.RIDGE,text_shadow=(0,0.5,1,0.8),text_shadowOffset=(0.07,0.07),
+            indicatorValue=val,boxPlacement=boxplct,extraArgs=extraArgs)
         ndp["command"] = cmd; return ndp
-    def arcEntry(self,pos,txt="",cmd=None,scale=0.08,nlines=1): #override entry
-        ndp = DirectEntry(pos=pos,initialText=txt,scale=scale,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,0.8),relief=DGG.RIDGE)
+    def arcEntry(self,pos,txt="",cmd=None,scale=0.08,width=10,nlines=1,obscured=False,extraArgs=[]): #override entry
+        ndp = DirectEntry(pos=pos,initialText=txt,scale=scale,width=width,numLines=nlines,entryFont=self.arcFont,frameColor=(1,1,1,1),
+            relief=DGG.RIDGE,obscured=obscured,extraArgs=extraArgs)
         ndp["command"] = cmd; return ndp
-    def arcSlider(self,pos,scale=1,inter=(0,100),initVal=50,pas=1,cmd=None,orient=DGG.HORIZONTAL): #override slider
+    def arcSlider(self,pos,scale=1,inter=(0,100),initVal=50,pas=1,cmd=None,extraArgs=[],orient=DGG.HORIZONTAL): #override slider
         calc_size = None; calc_text = None; calc_pos = None
         if orient == DGG.HORIZONTAL:
             calc_size = (scale*-0.5,scale*0.5,scale*0.1,scale*-0.1); calc_text = "|"; calc_pos = (0,scale*-0.033-0.0035)
@@ -87,12 +106,13 @@ class ArcnsApp(DirectObject):
             calc_size = (scale*-0.1,scale*0.1,scale*0.5,scale*-0.5); calc_text = "_"; calc_pos = (-0.01*scale,0)
         ndp = DirectSlider(pos=pos,range=inter, value=initVal, pageSize=pas,orientation=orient,frameColor=(0,0.5,1,1),
             frameSize=calc_size,thumb_relief=DGG.RIDGE,thumb_text=calc_text,thumb_text_scale=scale*0.12,
-            thumb_text_fg=(1,1,1,1),thumb_borderWidth=(0.01,0.01),thumb_text_pos=calc_pos,thumb_frameColor=(1,1,1,1))
+            thumb_text_fg=(1,1,1,1),thumb_borderWidth=(0.01,0.01),thumb_text_pos=calc_pos,
+            thumb_frameColor=(1,1,1,1),extraArgs=extraArgs)
     	ndp["command"] = cmd; return ndp
-    def arcScrollBar(self,pos,scale=1,inter=(0,1),val=0.5,pas=0.1,cmd=None,orient=DGG.HORIZONTAL): #override scrollbar
+    def arcScrollBar(self,pos,scale=1,inter=(0,1),val=0.5,pas=0.1,cmd=None,extraArgs=[],orient=DGG.HORIZONTAL): #override scrollbar
         ndp = DirectScrollBar(pos=pos,range=inter,value=val,pageSize=pas,orientation=orient,frameColor=(0,0.5,1,1),
             thumb_relief=DGG.RIDGE,thumb_borderWidth=(0.01,0.01),decButton_relief=DGG.RIDGE,incButton_relief=DGG.RIDGE,
-            thumb_frameColor=(1,1,1,1),decButton_frameColor=(1,1,1,1),incButton_frameColor=(1,1,1,1),
+            thumb_frameColor=(1,1,1,1),decButton_frameColor=(1,1,1,1),incButton_frameColor=(1,1,1,1),extraArgs=extraArgs,
             decButton_borderWidth=(0.01,0.01),incButton_borderWidth=(0.01,0.01),decButton_text="-",incButton_text="+",
             decButton_text_scale=scale*0.12,incButton_text_scale=scale*0.12,scale=scale,
             decButton_text_pos=(-0.005*scale,-0.025*scale),incButton_text_pos=(-0.005*scale,-0.02*scale))

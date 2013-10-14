@@ -2,54 +2,8 @@
 
 from panda3d.core import *
 
-packager.setHost("http://192.168.85.219/arcns/packs/")
-#packager.setHost("http://localhost/arcns/packs/")
-#packager.setHost("http://othelarian.github.com/arcns/packs/")
-
-class arcns_tools_pack(package):
-    #
-    # TODO : mise en place d'un package contenant les outils communs
-    #
-    pass
-
-class arcns_mainscene_pack(package):
-    require("panda3d","morepy","tk","audio")
-    dir("mainscene/models")
-    dir("mainscene/sounds")
-    dir("mainscene/musics")
-    module("mainscene.*")
-    module("mainscene.lang.*")
-
-class arcns_persoscene_pack(package):
-    #
-    require("panda3d","morepy")
-    #
-    # TODO : ajout des models
-    #
-    # TODO : ajout des fichiers de sons
-    #
-    # TODO : ajout des fichiers de musique
-    #
-    module("persoscene.*")
-    #
-    # TODO : ajout des fichiers de traduction
-    #
-
-class arcns_gamescene_pack(package):
-    require("panda3d","morepy")
-    #
-    # TODO : ajout des models
-    #
-    # TODO : ajout des fichiers de sons
-    #
-    # TODO : ajout des fichiers de musique
-    #
-    module("gamescene.*")
-    module("gamescene.lang.*")
-
 class arcns(p3d):
-    require("panda3d","arcns_mainscene_pack","arcns_persoscene_pack",
-        "arcns_gamescene_pack","arcns_tools_pack")
+    require("panda3d","morepy","audio","tk")
     file("config.prc")
     file("misc/firstv2.ttf")
     dir("models")

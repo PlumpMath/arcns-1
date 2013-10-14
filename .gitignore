@@ -1,4 +1,6 @@
-config.json
+arcns_config.json
 *~
 *.pyo
 *.pyc
+*.bam
+arcns_mfs/*

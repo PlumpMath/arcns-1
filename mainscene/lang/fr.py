@@ -48,6 +48,7 @@ fr_lang = {
         "btn_valid":"Valider",
         "btn_reset":"Annuler",
         "maj_verify":"Vérifier les\nmises à jour",
+        "maj_stitre":"Mise à jour :",
         "maj_cancel":"Annuler",
         "maj_progress":"Vérification en cours ...",
         "maj_doit":"Mettre à jour"

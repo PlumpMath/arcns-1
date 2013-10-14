@@ -48,6 +48,7 @@ en_lang = {
         "btn_valid":"Accept",
         "btn_reset":"Cancel",
         "maj_verify":"Check for\nupdate",
+        "maj_stitre":"Update :",
         "maj_cancel":"Cancel",
         "maj_progress":"Checking ...",
         "maj_doit":"Do update"
