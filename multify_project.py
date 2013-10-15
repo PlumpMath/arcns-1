@@ -2,15 +2,19 @@
 
 from panda3d.core import Multifile, Filename
 
-import os, py_compile
+import os, sys, py_compile
+
+if len(sys.argv) < 2:
+    print "please indicate a version number"; sys.exit(0)
 
 if not os.path.exists("arcns_mfs"): os.mkdir("arcns_mfs")
 
 def crea_mf(name):
-    if os.path.exists("arcns_mfs/"+name+".mf"):
-        if os.stat(name).st_mtime <= os.stat("arcns_mfs/"+name+".mf").st_mtime: return
-        else: os.unlink("arcns_mfs/"+name+".mf")
-    mf = Multifile(); mf.openWrite("arcns_mfs/"+name+".mf")
+    name_r = name+"_r"+str(sys.argv[1])
+    if os.path.exists("arcns_mfs/"+name_r+".mf"):
+        if os.stat(name).st_mtime <= os.stat("arcns_mfs/"+name_r+".mf").st_mtime: return
+        else: os.unlink("arcns_mfs/"+name_r+".mf")
+    mf = Multifile(); mf.openWrite("arcns_mfs/"+name_r+".mf")
     for root,dirs,files in os.walk(name):
         for f in files:
             if f[-1] == "~" or f[-3:] == "pyc" or f[-3:] == "pyo" or f[-3:] == "bam": pass

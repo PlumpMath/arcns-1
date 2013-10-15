@@ -51,6 +51,11 @@ fr_lang = {
         "maj_stitre":"Mise à jour :",
         "maj_cancel":"Annuler",
         "maj_progress":"Vérification en cours ...",
-        "maj_doit":"Mettre à jour"
+        "maj_doit":"Mettre à jour",
+        "maj_retry":"Réessayer",
+        "maj_err0":"Impossible de modifier le jeu !",
+        "maj_err1":"Serveur de mise à jour indisponible !",
+        "maj_nomaj":"La version actuelle est la plus récente.",
+        "maj_update":"Une mise à jour est disponible."
     }
 }

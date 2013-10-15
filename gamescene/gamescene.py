@@ -25,7 +25,7 @@ class gameScene(FSM,DirectObject):
         self.accept("a",self.app.main_screen)
         self.accept("escape",sys.exit,[0])
         #
-        self.tmp_mod = base.loader.loadModel("mainscene/models/statics/main_arcs_show")
+        self.tmp_mod = base.loader.loadModel("mainscene/models/statics/main_arcs_show.bam")
         self.tmp_mod.reparentTo(render)
         #
         tmp_node = DirectionalLight("test_dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))

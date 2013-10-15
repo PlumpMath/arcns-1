@@ -5,24 +5,15 @@ from panda3d.core import loadPrcFile
 loadPrcFile("config.prc")
 
 from direct.showbase.DirectObject import DirectObject
+from direct.showbase import VFSImporter
 from direct.gui.DirectGui import *
+from direct.stdpy.file import *
 from panda3d.core import Vec4, TextNode, CardMaker, NodePath, PandaNode, AmbientLight, WindowProperties
 from panda3d.core import CollisionTraverser, CollisionNode, CollisionHandlerQueue, CollisionRay, BitMask32
-#
-# DEBUG : cette ligne doit être vérifiée
 from panda3d.core import Multifile, VirtualFileSystem, Filename
-#
 from pandac.PandaModules import TransparencyAttrib
 
-# TODO : suppression des imports, à remplacer par le chargement des multifiles
-
-###
-#from mainscene.mainscene import mainScene
-#from persoscene.persoscene import persoScene
-#from gamescene.gamescene import gameScene
-#from arcstools.arcstools import arcsTools
-###
-
+import urllib, sys, os, json
 import direct.directbase.DirectStart
 
 class ArcnsApp(DirectObject):
@@ -32,28 +23,82 @@ class ArcnsApp(DirectObject):
         self.cust_mouse_tex = {}
         self.cust_mouse_tex["blank"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/blank_cursor.png")
         self.cust_mouse_tex["main"] = loader.loadTexture(("" if base.appRunner else "models/")+"cursors/main_cursor.png")
-        #
-        self.change_cursor("blank")
-        #
-        #
-        # TODO : vérification des multifiles, et download s'ils ne sont pas présent
-        #
-        # TODO : interface pour le téléchargement des multifiles
-        #
-        #
         self.alghtnode = AmbientLight("ambient light"); self.alghtnode.setColor(Vec4(0.4,0.4,0.4,1))
         self.voile = DirectFrame(frameSize=(-2,2,-2,2),frameColor=(1,1,1,0.7)); self.voile.setBin("gui-popup",1); self.voile.hide()
-        cust_path = ("" if base.appRunner else "mainscene/models/")
-        self.arrow_mod = loader.loadModel(cust_path+"statics/arrow")
-        self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1.1,1,-0.8,0.8); self.card_arrow.setColor(1,0,0,1)
         self.mouse_trav = CollisionTraverser(); self.mouse_hand = CollisionHandlerQueue()
         self.pickerNode = CollisionNode("mouseRay"); self.pickerNP = camera.attachNewNode(self.pickerNode)
         self.pickerNode.setFromCollideMask(BitMask32.bit(1)); self.pickerRay = CollisionRay()
         self.pickerNode.addSolid(self.pickerRay); self.mouse_trav.addCollider(self.pickerNP,self.mouse_hand)
-        self.curdir = (base.appRunner.p3dFilename.getDirname() if base.appRunner else ".")
-        self.tools = arcsTools(); self.initScreen(); self.transit = None
-        self.main_config = None; self.speak = None; self.scene = mainScene(self); self.scene.request("Init")
+        self.initScreen(); self.transit = None; self.change_cursor("blank")
     	base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
+        self.dic_gui = {}
+        tmp_gui = self.arcLabel("ARCNS",(0,0,0.4),0.2,TextNode.ACenter); self.dic_gui["arcns_lab"] = tmp_gui
+        tmp_gui = self.arcWaitBar((0,0,0),1,10,0); self.dic_gui["arcns_waitbar"] = tmp_gui
+        tmp_gui = self.arcLabel("Error : files missing and\nimpossible to download.",(0,0,0),0.08,TextNode.ACenter)
+        tmp_gui.hide(); self.dic_gui["arcns_error"] = tmp_gui
+        tmp_gui = self.arcButton("Quit",(-0.3,0,-0.3),sys.exit,0.1,TextNode.ACenter,[0])
+        tmp_gui.hide(); self.dic_gui["arcns_quit"] = tmp_gui
+        tmp_gui = self.arcButton("Retry",(0.3,0,-0.3),self.verifyInit,0.1,TextNode.ACenter)
+        tmp_gui.hide(); self.dic_gui["arcns_retry"] = tmp_gui
+        taskMgr.doMethodLater(0.1,self.verifyInit,"verify init")
+    def verifyInit(self,task):
+        if self.dic_gui["arcns_waitbar"]["value"] == 0:
+            self.dic_gui["arcns_error"].hide(); self.dic_gui["arcns_quit"].hide(); self.dic_gui["arcns_retry"].hide()
+            self.change_cursor("blank"); self.dic_gui["arcns_waitbar"].show()
+            if exists("arcns_tmp"):
+                for f in os.listdir("arcns_tmp"): os.unlink("arcns_tmp/"+f)
+                os.rmdir("arcns_tmp")
+            self.dic_gui["arcns_waitbar"]["value"] = 1; return task.again
+        elif self.dic_gui["arcns_waitbar"]["value"] == 1:
+            if not exists("arcns_multifiles.json"):
+                try:
+                    urllib.urlretrieve("http://www.arcns.net/arcns_multifiles.json","arcns_multifiles.json")
+                except Exception,e:
+                    print e; self.showBadInit(); return task.done
+            self.dic_gui["arcns_waitbar"]["value"] = 2; return task.again
+        elif self.dic_gui["arcns_waitbar"]["value"] == 2:
+            self.arcns_multifiles = None
+            try:
+                self.arcns_multifiles = json.loads("".join([line.rstrip().lstrip() for line in file("arcns_multifiles.json","rb")]))
+            except Exception,e:
+                os.unlink("arcns_multifiles.json"); print e; self.showBadInit(); return task.done
+            self.dic_gui["arcns_waitbar"]["value"] = 3; return task.again
+        elif self.dic_gui["arcns_waitbar"]["value"] == 3:
+            if not exists("arcns_mfs"):
+                try: os.mkdir("arcns_mfs")
+                except Exception,e:
+                    print e; self.showBadInit(); return task.done
+            self.dic_gui["arcns_waitbar"]["value"] = 4; return task.again
+        elif self.dic_gui["arcns_waitbar"]["value"] >= 4 and self.dic_gui["arcns_waitbar"]["value"] <= 7:
+            tmp_keys = []
+            for key in self.arcns_multifiles: tmp_keys.append(key)
+            f = "arcns_mfs/"+tmp_keys[self.dic_gui["arcns_waitbar"]["value"] - 4]+"_r"
+            f += str(self.arcns_multifiles[tmp_keys[self.dic_gui["arcns_waitbar"]["value"] - 4]])+".mf"
+            if not exists(f):
+                try: urllib.urlretrieve("http://www.arcns.net/"+f,f)
+                except Exception,e:
+                    print e; self.showBadInit(); return task.done
+            self.dic_gui["arcns_waitbar"]["value"] += 1; return task.again
+        elif self.dic_gui["arcns_waitbar"]["value"] == 8:
+            vfs = VirtualFileSystem.getGlobalPtr()
+            for key in self.arcns_multifiles: vfs.mount(Filename("arcns_mfs/"+key+"_r"+str(self.arcns_multifiles[key])+".mf"), ".", VirtualFileSystem.MFReadOnly)
+            self.dic_gui["arcns_waitbar"]["value"] = 9; return task.again
+        else:
+            for key in self.dic_gui:
+                for t in self.dic_gui[key].options():
+                    if t[0] == "command":
+                        self.dic_gui[key]["command"] = None; break
+                self.dic_gui[key].removeNode()
+            from arcstools.arcstools import arcsTools
+            self.arcstools = arcsTools()
+            self.arrow_mod = loader.loadModel("mainscene/models/statics/arrow.bam")
+            self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1.1,1,-0.8,0.8); self.card_arrow.setColor(1,0,0,1)
+            from mainscene.mainscene import mainScene
+            self.main_config = None; self.speak = None; self.scene = mainScene(self); self.scene.request("Init")
+            return task.done
+    def showBadInit(self):
+        self.change_cursor("main"); self.dic_gui["arcns_waitbar"].hide(); self.dic_gui["arcns_wait_bar"]["value"] = 0
+        self.dic_gui["arcns_error"].show(); self.dic_gui["arcns_quit"].show(); self.dic_gui["arcns_retry"].show()
     def clearScreen(self):
         self.cust_mouse.removeNode(); render.clearLight(self.alght); self.alght.removeNode(); self.pickly_node.removeNode()
     def initScreen(self,x=640,y=480):
@@ -123,6 +168,7 @@ class ArcnsApp(DirectObject):
             barBorderWidth=(0.01,0.01),borderWidth=(0.01,0.01),frameColor=(1,1,1,1),barColor=(0,0.5,1,1))
         return ndp
     def main_screen(self):
+        from mainscene.mainscene import mainScene
         self.scene.close(); self.scene = None; self.clearScreen()
         wp = WindowProperties()
         if self.main_config["fullscreen"]: wp.setFullscreen(False)
@@ -130,6 +176,7 @@ class ArcnsApp(DirectObject):
         self.initScreen(); self.change_cursor("blank"); self.scene = mainScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
     def game_screen(self):
+        from gamescene.gamescene import gameScene
         self.scene.close(); self.scene = None; self.clearScreen();
         x = 950; y = 700; wp = WindowProperties()
         if self.main_config["fullscreen"]:
@@ -144,6 +191,8 @@ class ArcnsApp(DirectObject):
         self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
     def crea_persoscene(self):
+        from persoscene.persoscene import persoScene
         return persoScene()
 
+VFSImporter.register()
 app = ArcnsApp(); run()

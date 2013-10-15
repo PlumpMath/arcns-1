@@ -51,6 +51,11 @@ en_lang = {
         "maj_stitre":"Update :",
         "maj_cancel":"Cancel",
         "maj_progress":"Checking ...",
-        "maj_doit":"Do update"
+        "maj_doit":"Do update",
+        "maj_retry":"Retry",
+        "maj_err0":"Impossible to modifiy the game !",
+        "maj_err1":"Update server unreachable !",
+        "maj_nomaj":"The actual version is the latest",
+        "maj_update":"A new update is available."
     }
 }

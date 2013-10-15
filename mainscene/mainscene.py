@@ -9,7 +9,7 @@ from direct.actor.Actor import Actor
 from panda3d.core import Point3, Vec4, TextNode, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
-import Tkinter, tkFileDialog, json, sys, lang
+import Tkinter, tkFileDialog, json, sys, lang, os, urllib
 
 class mainScene(FSM,DirectObject):
     """ ****************************
@@ -19,17 +19,16 @@ class mainScene(FSM,DirectObject):
         FSM.__init__(self,"mainScene"); self.defaultTransitions = {"Init":["MainMenu"],"MainMenu":["SubMenu"],"SubMenu":["MainMenu"]}
         camera.setPos(0,-62,12); camera.setHpr(0,-10,0); self.accept("escape",sys.exit,[0])
         self.app = app; self.version = "v0.0"; self.nomove = False
-        if exists(self.app.curdir+"/arcns_config.json"):
-            self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file(self.app.curdir+"/arcns_config.json","rb")]))
+        if exists("arcns_config.json"):
+            self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file("arcns_config.json","rb")]))
         else:
-            self.app.main_config = {"fullscreen": False, "lang_chx": 0,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
+            self.app.main_config = {"fullscreen": False, "lang_chx": 1,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
             try:
-            	mcf = open(self.app.curdir+"/arcns_config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
+            	mcf = open("arcns_config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
             except Exception,e: print e
         self.dic_lights = {}; self.activeLights()
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
-        self.cust_path = ("" if base.appRunner else "mainscene/models/")
         #
         self.states = {"main_chx":0,"main_lst":[]}; self.options = {}
         for key in self.app.main_config: self.options[key] = ([self.app.main_config[key]] if key == "fullscreen" else self.app.main_config[key])
@@ -50,15 +49,15 @@ class mainScene(FSM,DirectObject):
         #
         self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
     def loadSfx(self):
-        self.dic_sounds["main_menu_sel"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_sel.wav")
-        self.dic_sounds["main_menu_switch"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_main.wav")
-        self.dic_sounds["main_menu_escape"] = base.loader.loadSfx(("" if base.appRunner else "mainscene/sounds/")+"son_main_menu_aux.wav")
+        self.dic_sounds["main_menu_sel"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_sel.wav")
+        self.dic_sounds["main_menu_switch"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_main.wav")
+        self.dic_sounds["main_menu_escape"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_aux.wav")
         for key in self.dic_sounds: self.dic_sounds[key].setVolume(self.app.main_config["sounds_vol"])
     def loadMusics(self):
         #
         # TODO : changer le ".mp3" par ".wav" dès que la musique sera prête
         #
-        self.dic_musics["mainscene_music"] = base.loader.loadMusic(("" if base.appRunner else "mainscene/musics/")+"main_music.mp3")
+        self.dic_musics["mainscene_music"] = base.loader.loadMusic("mainscene/musics/main_music.mp3")
         #
         self.dic_musics["mainscene_music"].setVolume(self.app.main_config["music_vol"])
     # NOTE : cette méthode est temporaire, et sera à terme remplacer par l'outils de parsing des scènes
@@ -161,28 +160,33 @@ class mainScene(FSM,DirectObject):
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_mute"] = tmp_gui
         tmp_gui = self.app.arcSlider((-0.3,0,-0.6),1,(0,1),self.options["sounds_vol"],0.1,self.actionSubMenu,["change_opt","sounds_vol"])
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_slider"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_verify"],(0.5,0,0.4),self.checkMaj)
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_verify"],(0.5,0,0.4),self.checkMajStarter)
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["maj_verify"] = tmp_gui
         #formulaire de mise à jour
         tmp_frame2 = DirectFrame(); self.dic_gui["option_menu"]["maj_frame"] = tmp_frame2
         tmp_frame2.hide(); tmp_frame2.reparentTo(self.app.voile)
         tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_stitre"],(0,0,0.4),0.15,TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_stitre"] = tmp_gui
-        #
-        # TODO : paramétrage de la waitbar pour la vérification
-        #
-        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,text=self.app.speak["option_menu"]["maj_progress"])
+        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,4,0,self.app.speak["option_menu"]["maj_progress"])
         tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_progress"] = tmp_gui
-        #
-        # TODO : label d'erreur de la vérification
-        #
-        # TODO : label de non maj
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_err0"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err0"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_retry"],(-0.3,0,-0.1),self.checkMajStarter,txtalgn=TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_retry"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_cancel"],(0.3,0,-0.1),self.cancelMaj,txtalgn=TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_cancel"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_err1"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err1"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_nomaj"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_nomaj"] = tmp_gui
         #
         # TODO : label de maj possible
         #
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_update"],(0,0,0.1),0.1,TextNodeACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_update"] = tmp_gui
+        #
         # TODO : bouton de validation de la maj
         #
-        # TODO : bouton d'annulation de la maj
         #
         # TODO : waitbar de charegment de la maj
         #
@@ -219,21 +223,21 @@ class mainScene(FSM,DirectObject):
         # NOTE : toutes la partie entre ### est temporaire, en attente que le module de parsing fonctionne
         ###
         #gates and moving arcs
-        tmp_mod = Actor(self.cust_path+"dynamics/main_gates"); tmp_mod.reparentTo(render)
+        tmp_mod = Actor("mainscene/models/dynamics/main_gates.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,-48.2,9.5); tmp_mod.setHpr(0,80,0); self.dic_dynamics["gates"] = tmp_mod
-        tmp_mod = Actor(self.cust_path+"dynamics/main_m_menu"); tmp_mod.reparentTo(render)
+        tmp_mod = Actor("mainscene/models/dynamics/main_m_menu.bam"); tmp_mod.reparentTo(render)
         tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
-        tmp_mod = Actor(self.cust_path+"dynamics/main_a_menu"); tmp_mod.reparentTo(render)
+        tmp_mod = Actor("mainscene/models/dynamics/main_a_menu.bam"); tmp_mod.reparentTo(render)
         tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
         #décors
-        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_sol"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel("mainscene/models/statics/main_sol.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
-        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_roofs"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel("mainscene/models/statics/main_roofs.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["roofs"] = tmp_mod
-        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_arcs_show"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel("mainscene/models/statics/main_arcs_show.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,7.3,3); self.dic_statics["arcs_shower"] = tmp_mod
         #
-        tmp_mod = base.loader.loadModel(self.cust_path+"statics/main_title"); tmp_mod.reparentTo(render)
+        tmp_mod = base.loader.loadModel("mainscene/models/statics/main_title.bam"); tmp_mod.reparentTo(render)
         self.dic_statics["arc_title"] = tmp_mod
         ###
         #
@@ -399,6 +403,7 @@ class mainScene(FSM,DirectObject):
             self.dic_anims["cam_move_subtomain"].start()
             taskMgr.doMethodLater(1,self.subArcsTask,"anim aux arcs task")
             taskMgr.doMethodLater(2.5,self.goMainMenuTask,"aff main menu task")
+            self.dic_gui["aux_menu"]["return_btn"]["state"] = DGG.DISABLED
             #
             # TODO : remise à zéro des options et DGG.DISABLED sur les boutons
             #
@@ -450,17 +455,82 @@ class mainScene(FSM,DirectObject):
         print tkFileDialog.askdirectory()
         """
         #
-    def checkMaj(self):
+    def checkMajStarter(self):
         #
         # TODO : hide et show forcés des éléments possiblement encore visibles / invisibles
         #
+        self.dic_gui["option_menu"]["maj_cancel"].hide(); self.dic_gui["option_menu"]["maj_retry"].hide()
+        self.dic_gui["option_menu"]["maj_err0"].hide(); self.dic_gui["option_menu"]["maj_err1"].hide()
+        #
+        self.dic_gui["option_menu"]["maj_nomaj"].hide()
+        #
+        #
+        self.dic_gui["option_menu"]["maj_progress"].show()
+        #
         self.dic_gui["option_menu"]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
         self.app.voile.show(); self.ignoreAll(); self.dic_gui["option_menu"]["maj_frame"].show()
+        self.app.change_cursor("blank"); self.dic_gui["option_menu"]["maj_progress"]["value"] = 0
+        taskMgr.doMethodLater(0.1,self.majTask,"check maj task")
+    def majTask(self,task):
+        if self.dic_gui["option_menu"]["maj_progress"]["value"] == 0:
+            if not exists("arcns_tmp"):
+                try: os.mkdir("arcns_tmp")
+                except Exception,e:
+                    print e; self.labelMaj(); return task.done
+            self.dic_gui["option_menu"]["maj_progress"]["value"] = 1; return task.again
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 1:
+            try:
+                urllib.urlretrieve("http://www.arcns.net/arcns_multifiles.json","arcns_tmp/arcns_multifiles.json")
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+            self.dic_gui["option_menu"]["maj_progress"]["value"] = 2; return task.again
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 2:
+            try:
+                self.tmp_multifiles = json.loads("".join([line.rstrip().lstrip() for line in file("arcns_tmp/arcns_multifiles.json","rb")]))
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+            self.dic_gui["option_menu"]["maj_progress"]["value"] = 3; return task.again
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 3:
+            if self.app.arcns_multifiles["mainscene"] < self.tmp_multifiles["mainscene"]: self.dic_gui["option_menu"]["maj_progress"]["value"] = 4
+            self.labelMaj(); return task.done
+        #
+        else:
+            #
+            #
+            return task.done
+            #
+        #
+        # TODO : switch avec tous les cas possible lors d'une mise à jour
+        #
+        return task.done
+    def labelMaj(self):
+        self.app.change_cursor("main"); self.accept("escape",self.cancelMaj); self.dic_gui["option_menu"]["maj_progress"].hide()
+        val_btn = "retry"
+        if self.dic_gui["option_menu"]["maj_progress"]["value"] == 0: self.dic_gui["option_menu"]["maj_err0"].show()
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 1: self.dic_gui["option_menu"]["maj_err1"].show()
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 2: self.dic_gui["option_menu"]["maj_err1"].show()
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 3: self.dic_gui["option_menu"]["maj_nomaj"].show()
+        elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 4:
+            #
+            val_btn = "doit"
+            #
+            # TODO : formulaire de maj disponible
+            #
+            pass
         #
         #
-        # TODO : fonction de vérification des mises à jours
+        self.dic_gui["option_menu"]["maj_cancel"].show(); self.dic_gui["option_menu"]["maj_"+val_btn].show()
         #
+        # TODO : affichage des erreurs lors des mises à jour
         #
+    def cancelMaj(self):
+        if exists("arcns_tmp"):
+            lst = listdir("arcns_tmp")
+            for elt in lst: os.unlink("arcns_tmp/"+elt)
+            os.rmdir("arcns_tmp")
+        self.app.voile.hide(); self.ignoreAll(); self.dic_gui["option_menu"]["maj_frame"].hide()
+        self.dic_gui["option_menu"]["frame"].show(); self.dic_gui["aux_menu"]["frame"].show()
+        self.accept("enter",self.actionSubMenu,["valid_opt"]); self.accept("escape",self.actionSubMenu,["quit"])
     def goMainMenuTask(self,task):
         self.request("MainMenu"); return task.done
     def subArcsTask(self,task):
