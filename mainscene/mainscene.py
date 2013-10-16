@@ -7,9 +7,10 @@ from direct.gui.DirectGui import DirectFrame, DGG
 from direct.stdpy.file import *
 from direct.actor.Actor import Actor
 from panda3d.core import Point3, Vec4, TextNode, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
+from panda3d.core import Multifile, VirtualFileSystem, Filename, Patchfile
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
-import Tkinter, tkFileDialog, json, sys, lang, os, urllib
+import Tkinter, tkFileDialog, json, sys, lang, os, urllib, shutil
 
 class mainScene(FSM,DirectObject):
     """ ****************************
@@ -18,7 +19,7 @@ class mainScene(FSM,DirectObject):
     def __init__(self,app):
         FSM.__init__(self,"mainScene"); self.defaultTransitions = {"Init":["MainMenu"],"MainMenu":["SubMenu"],"SubMenu":["MainMenu"]}
         camera.setPos(0,-62,12); camera.setHpr(0,-10,0); self.accept("escape",sys.exit,[0])
-        self.app = app; self.version = "v0.0"; self.nomove = False
+        self.app = app; self.version = "v0.1"; self.nomove = False
         if exists("arcns_config.json"):
             self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file("arcns_config.json","rb")]))
         else:
@@ -35,6 +36,7 @@ class mainScene(FSM,DirectObject):
         #
         # DEBUG : commande pour les tests
         self.accept("d",self.app.game_screen)
+        self.accept("r",self.endingMaj)
         ###
         #
         self.dic_sounds = {}; self.loadSfx()
@@ -179,23 +181,16 @@ class mainScene(FSM,DirectObject):
         tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err1"] = tmp_gui
         tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_nomaj"],(0,0,0.1),0.1,TextNode.ACenter)
         tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_nomaj"] = tmp_gui
-        #
-        # TODO : label de maj possible
-        #
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_update"],(0,0,0.1),0.1,TextNodeACenter)
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_update"],(0,0,0.1),0.1,TextNode.ACenter)
         tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_update"] = tmp_gui
-        #
-        # TODO : bouton de validation de la maj
-        #
-        #
-        # TODO : waitbar de charegment de la maj
-        #
-        # TODO : label d'erreur de la maj
-        #
-        # TODO : label de succès de la maj
-        #
-        # TODO : bouton pour quitter après mise à jour
-        #
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_doit"],(-0.3,0,-0.1),self.doMajStarter,txtalgn=TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_doit"] = tmp_gui
+        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,4,0,self.app.speak["option_menu"]["maj_upgrade"])
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_upgrade"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_success"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_success"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_quit"],(0,0,-0.4),self.endingMaj,0.11,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_quit"] = tmp_gui
         tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_valid"],(-0.9,0,-0.8),self.actionSubMenu,extraArgs=["valid_opt"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_valid"] = tmp_gui
         tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_reset"],(-0.5,0,-0.8),self.actionSubMenu,extraArgs=["cancel_opt"])
@@ -456,21 +451,27 @@ class mainScene(FSM,DirectObject):
         """
         #
     def checkMajStarter(self):
-        #
-        # TODO : hide et show forcés des éléments possiblement encore visibles / invisibles
-        #
-        self.dic_gui["option_menu"]["maj_cancel"].hide(); self.dic_gui["option_menu"]["maj_retry"].hide()
+        self.dic_gui["option_menu"]["maj_success"].hide(); self.dic_gui["option_menu"]["maj_quit"].hide()
+        self.dic_gui["option_menu"]["maj_retry"].hide(); self.dic_gui["option_menu"]["maj_retry"]["command"] = self.checkMajStarter
         self.dic_gui["option_menu"]["maj_err0"].hide(); self.dic_gui["option_menu"]["maj_err1"].hide()
-        #
-        self.dic_gui["option_menu"]["maj_nomaj"].hide()
-        #
-        #
-        self.dic_gui["option_menu"]["maj_progress"].show()
-        #
+        self.dic_gui["option_menu"]["maj_nomaj"].hide(); self.dic_gui["option_menu"]["maj_update"].hide()
+        self.dic_gui["option_menu"]["maj_doit"].hide(); self.dic_gui["option_menu"]["maj_upgrade"].hide()
+        self.dic_gui["option_menu"]["maj_cancel"].hide(); self.dic_gui["option_menu"]["maj_progress"].show()
         self.dic_gui["option_menu"]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
         self.app.voile.show(); self.ignoreAll(); self.dic_gui["option_menu"]["maj_frame"].show()
         self.app.change_cursor("blank"); self.dic_gui["option_menu"]["maj_progress"]["value"] = 0
         taskMgr.doMethodLater(0.1,self.majTask,"check maj task")
+    def doMajStarter(self):
+        self.dic_gui["option_menu"]["maj_cancel"].hide()
+        self.dic_gui["option_menu"]["maj_retry"].hide(); self.dic_gui["option_menu"]["maj_retry"]["command"] = self.doMajStarter
+        self.dic_gui["option_menu"]["maj_update"].hide(); self.dic_gui["option_menu"]["maj_doit"].hide()
+        self.dic_gui["option_menu"]["maj_err0"].hide(); self.dic_gui["option_menu"]["maj_err1"].hide()
+        lst = listdir("arcns_tmp")
+        for elt in lst:
+            if not elt == "arcns_multifiles.json": os.unlink("arcns_tmp/"+elt)
+        self.dic_gui["option_menu"]["maj_progress"]["value"] = 5; self.dic_gui["option_menu"]["maj_upgrade"].show()
+        self.app.change_cursor("blank"); self.ignoreAll(); self.dic_gui["option_menu"]["maj_upgrade"]["value"] = 0
+        taskMgr.doMethodLater(0.1,self.majTask,"do maj task")
     def majTask(self,task):
         if self.dic_gui["option_menu"]["maj_progress"]["value"] == 0:
             if not exists("arcns_tmp"):
@@ -491,38 +492,67 @@ class mainScene(FSM,DirectObject):
                 print e; self.labelMaj(); return task.done
             self.dic_gui["option_menu"]["maj_progress"]["value"] = 3; return task.again
         elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 3:
-            if self.app.arcns_multifiles["mainscene"] < self.tmp_multifiles["mainscene"]: self.dic_gui["option_menu"]["maj_progress"]["value"] = 4
+            for key in self.app.arcns_multifiles:
+                if self.app.arcns_multifiles[key] < self.tmp_multifiles[key]: self.dic_gui["option_menu"]["maj_progress"]["value"] = 4
+                else: del self.tmp_multifiles[key]
             self.labelMaj(); return task.done
-        #
-        else:
-            #
-            #
-            return task.done
-            #
-        #
-        # TODO : switch avec tous les cas possible lors d'une mise à jour
-        #
-        return task.done
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 0:
+            try:
+                for key in self.tmp_multifiles:
+                    fln = "patch_"+key+"_r"+str(self.app.arcns_multifiles[key])+"_r"+str(self.tmp_multifiles[key])+".mf"
+                    urllib.urlretrieve("http://www.arcns.net/patchs/"+fln,"arcns_tmp/"+fln)
+                self.dic_gui["option_menu"]["maj_upgrade"]["value"] = 1; return task.again
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 1:
+            try:
+                for key in self.tmp_multifiles: shutil.copy("arcns_mfs/"+key+"_r"+str(self.app.arcns_multifiles[key])+".mf","arcns_tmp")
+                self.dic_gui["option_menu"]["maj_upgrade"]["value"] = 2; return task.again
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 2:
+            try:
+                p = Patchfile(); m = Multifile()
+                for key in self.tmp_multifiles:
+                    fln = "patch_"+key+"_r"+str(self.app.arcns_multifiles[key])+"_r"+str(self.tmp_multifiles[key])
+                    m.openRead("arcns_tmp/"+fln+".mf"); m.extractSubfile(0,"arcns_tmp/"+fln+".patch"); m.close()
+                    rtn = p.apply(Filename("arcns_tmp/"+fln+".patch"),Filename("arcns_tmp/"+key+"_r"+str(self.app.arcns_multifiles[key])+".mf"))
+                    if not rtn:
+                        self.labelMaj(); return task.done
+                    else: os.rename("arcns_tmp/"+key+"_r"+str(self.app.arcns_multifiles[key])+".mf","arcns_tmp/"+key+"_r"+str(self.tmp_multifiles[key])+".mf")
+                self.dic_gui["option_menu"]["maj_upgrade"]["value"] = 3; return task.again
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 3:
+            try:
+                for key in self.tmp_multifiles:
+                    shutil.copy("arcns_tmp/"+key+"_r"+str(self.tmp_multifiles[key])+".mf","arcns_mfs")
+                self.dic_gui["option_menu"]["maj_upgrade"]["value"] = 4; return task.again
+            except Exception,e:
+                print e; self.labelMaj(); return task.done
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 4:
+            for key in self.tmp_multifiles:
+                oldnb = self.app.arcns_multifiles[key]; self.app.arcns_multifiles[key] = self.tmp_multifiles[key]
+                mcm = open("arcns_multifiles.json","w"); mcm.write(json.dumps(self.app.arcns_multifiles)); mcm.close()
+                self.tmp_multifiles[key] = oldnb; os.unlink("arcns_mfs/"+key+"_r"+str(oldnb)+".mf")
+            self.dic_gui["option_menu"]["maj_success"].show(); self.dic_gui["option_menu"]["maj_quit"].show()
+            self.dic_gui["option_menu"]["maj_upgrade"].hide(); self.accept("enter",self.endingMaj)
+            self.app.change_cursor("main"); return task.done
     def labelMaj(self):
-        self.app.change_cursor("main"); self.accept("escape",self.cancelMaj); self.dic_gui["option_menu"]["maj_progress"].hide()
-        val_btn = "retry"
+        self.app.change_cursor("main"); self.accept("escape",self.cancelMaj); val_btn = "retry"
+        self.accept("enter",(self.checkMajStarter if self.dic_gui["option_menu"]["maj_progress"] == 5 else self.doMajStarter))
+        self.dic_gui["option_menu"]["maj_progress"].hide(); self.dic_gui["option_menu"]["maj_upgrade"].hide()
         if self.dic_gui["option_menu"]["maj_progress"]["value"] == 0: self.dic_gui["option_menu"]["maj_err0"].show()
         elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 1: self.dic_gui["option_menu"]["maj_err1"].show()
         elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 2: self.dic_gui["option_menu"]["maj_err1"].show()
         elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 3: self.dic_gui["option_menu"]["maj_nomaj"].show()
         elif self.dic_gui["option_menu"]["maj_progress"]["value"] == 4:
-            #
-            val_btn = "doit"
-            #
-            # TODO : formulaire de maj disponible
-            #
-            pass
-        #
-        #
+            val_btn = "doit"; self.dic_gui["option_menu"]["maj_update"].show()
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 0: self.dic_gui["option_menu"]["maj_err1"].show()
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 1: self.dic_gui["option_menu"]["maj_err0"].show()
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 2: self.dic_gui["option_menu"]["maj_err0"].show()
+        elif self.dic_gui["option_menu"]["maj_upgrade"]["value"] == 3: self.dic_gui["option_menu"]["maj_err0"].show()
         self.dic_gui["option_menu"]["maj_cancel"].show(); self.dic_gui["option_menu"]["maj_"+val_btn].show()
-        #
-        # TODO : affichage des erreurs lors des mises à jour
-        #
     def cancelMaj(self):
         if exists("arcns_tmp"):
             lst = listdir("arcns_tmp")
@@ -531,6 +561,8 @@ class mainScene(FSM,DirectObject):
         self.app.voile.hide(); self.ignoreAll(); self.dic_gui["option_menu"]["maj_frame"].hide()
         self.dic_gui["option_menu"]["frame"].show(); self.dic_gui["aux_menu"]["frame"].show()
         self.accept("enter",self.actionSubMenu,["valid_opt"]); self.accept("escape",self.actionSubMenu,["quit"])
+    def endingMaj(self):
+        executable = sys.executable; args = sys.argv[:]; args.insert(0, sys.executable); os.execvp(executable, args)
     def goMainMenuTask(self,task):
         self.request("MainMenu"); return task.done
     def subArcsTask(self,task):

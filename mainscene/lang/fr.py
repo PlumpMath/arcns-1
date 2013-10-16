@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 fr_lang = {
-    "main_dialog":{"valid":"Oui","cancel":"Non"},
     "main_menu":{
         "campaign":"Campagne",
         "mission":"Missions",
@@ -56,6 +55,9 @@ fr_lang = {
         "maj_err0":"Impossible de modifier le jeu !",
         "maj_err1":"Serveur de mise à jour indisponible !",
         "maj_nomaj":"La version actuelle est la plus récente.",
-        "maj_update":"Une mise à jour est disponible."
+        "maj_update":"Une mise à jour est disponible.",
+        "maj_upgrade":"Mise à jour ...",
+        "maj_success":"La mise à jour a été appliquée\navec succès.",
+        "maj_quit":"Terminer"
     }
 }

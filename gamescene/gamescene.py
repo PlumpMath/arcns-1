@@ -32,7 +32,7 @@ class gameScene(FSM,DirectObject):
         self.tmp_lght = render.attachNewNode(tmp_node); self.tmp_lght.setHpr(0,-70,0); render.setLight(self.tmp_lght)
         #
         # DEBUG : test de l'appel pour la création d'une persoscene
-        #perso = self.app.crea_persoscene()
+        perso = self.app.crea_persoscene()
         ###
         #
         #

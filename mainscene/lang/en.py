@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 en_lang = {
-    "main_dialog":{"valid":"Yes","cancel":"No"},
     "main_menu":{
         "campaign":"Campaign",
         "mission":"Missions",
@@ -56,6 +55,9 @@ en_lang = {
         "maj_err0":"Impossible to modifiy the game !",
         "maj_err1":"Update server unreachable !",
         "maj_nomaj":"The actual version is the latest",
-        "maj_update":"A new update is available."
+        "maj_update":"A new update is available.",
+        "maj_upgrade":"Updating ...",
+        "maj_success":"The update was\nsuccessfully applied.",
+        "maj_quit":"Finish"
     }
 }

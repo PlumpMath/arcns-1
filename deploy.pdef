@@ -6,7 +6,7 @@ class arcns(p3d):
     require("panda3d","morepy","audio","tk")
     file("config.prc")
     file("misc/firstv2.ttf")
-    dir("models")
+    dir("models","models")
     config(display_name="arcns")
     excludeModule("mainscene")
     excludeModule("persoscene")
