@@ -10,16 +10,7 @@ en_lang = {
     },
     "aux_menu":{"return_btn":"Main menu"},
     "camp_menu":{
-        "stitre":"Campaign :",
-        "sel_lab":"Team choice :",
-        "new_unit":"New team :",
-        "crea_unit":"Create",
-        "used_name":"This name is already used",
-        "supp_unit":"Remove",
-        "launch":"Play",
-        "no_unit":"No save found",
-        "supp_dialog1":"Are you sure to delete",
-        "supp_dialog2":"this unit ?"
+        "stitre":"Campaign :"
     },
     "mission_menu":{
         "stitre":"Missions :"

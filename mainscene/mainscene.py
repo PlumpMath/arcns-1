@@ -19,24 +19,25 @@ class mainScene(FSM,DirectObject):
     def __init__(self,app):
         FSM.__init__(self,"mainScene"); self.defaultTransitions = {"Init":["MainMenu"],"MainMenu":["SubMenu"],"SubMenu":["MainMenu"]}
         camera.setPos(0,-62,12); camera.setHpr(0,-10,0); self.accept("escape",sys.exit,[0])
-        self.app = app; self.version = "v0.1"; self.nomove = False
+        self.app = app; self.version = "v0.0"; self.nomove = False
         if exists("arcns_config.json"):
             self.app.main_config = json.loads("".join([line.rstrip().lstrip() for line in file("arcns_config.json","rb")]))
         else:
-            self.app.main_config = {"fullscreen": False, "lang_chx": 1,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
+            self.app.main_config = {"fullscreen": [False], "lang_chx": 1,"music":True,"sounds":True,"music_vol":1,"sounds_vol":1}
             try:
             	mcf = open("arcns_config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
             except Exception,e: print e
         self.dic_lights = {}; self.activeLights()
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
-        #
         self.states = {"main_chx":0,"main_lst":[]}; self.options = {}
-        for key in self.app.main_config: self.options[key] = ([self.app.main_config[key]] if key == "fullscreen" else self.app.main_config[key])
+        for key in self.app.main_config:
+            if key == "fullscreen": self.options[key] = [self.app.main_config[key][0]]
+            else: self.options[key] = self.app.main_config[key]
         #
         # DEBUG : commande pour les tests
         self.accept("d",self.app.game_screen)
-        self.accept("r",self.endingMaj)
+        self.accept("t",self.testdef)
         ###
         #
         self.dic_sounds = {}; self.loadSfx()
@@ -50,6 +51,10 @@ class mainScene(FSM,DirectObject):
         #
         #
         self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
+    # DEBUG : fonction uniquement présente pour faciliter les tests
+    def testdef(self):
+        pass
+    ###
     def loadSfx(self):
         self.dic_sounds["main_menu_sel"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_sel.wav")
         self.dic_sounds["main_menu_switch"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_main.wav")
@@ -81,7 +86,7 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["main_menu"]["mission"] = tmp_gui; self.states["main_lst"].append("mission")
         tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["credits"],(-0.26,0,-0.47),self.actionMainMenu,scale=0.09)
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["maj"] = tmp_gui; self.states["main_lst"].append("maj")
+        self.dic_gui["main_menu"]["credits"] = tmp_gui; self.states["main_lst"].append("credits")
         tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["options"],(-0.35,0,-0.58),self.actionMainMenu,scale=0.07)
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
         self.dic_gui["main_menu"]["options"] = tmp_gui; self.states["main_lst"].append("options")
@@ -153,14 +158,14 @@ class mainScene(FSM,DirectObject):
         tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["music_mute"],(0.3,0,-0.2),
             self.actionSubMenu,(1 if self.options["music"] else 0),extraArgs=["change_opt","music_mute"])
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["music_mute"] = tmp_gui
-        tmp_gui = self.app.arcSlider((-0.3,0,-0.3),1,(0,1),self.options["music_vol"],0.1,self.actionSubMenu,["change_opt","music_vol"])
+        tmp_gui = self.app.arcSlider((-0.3,0,-0.3),1,(0,1),self.options["music_vol"],0.1,self.actionSubMenu,[None,"change_opt","music_vol"])
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["music_slider"] = tmp_gui
         tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["sound_vol"],(-1.05,0,-0.5)); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["option_menu"]["sound_vol"] = tmp_gui
         tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["sound_mute"],(0.3,0,-0.5),
             self.actionSubMenu,(1 if self.options["sounds"] else 0),extraArgs=["change_opt","sound_mute"])
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_mute"] = tmp_gui
-        tmp_gui = self.app.arcSlider((-0.3,0,-0.6),1,(0,1),self.options["sounds_vol"],0.1,self.actionSubMenu,["change_opt","sounds_vol"])
+        tmp_gui = self.app.arcSlider((-0.3,0,-0.6),1,(0,1),self.options["sounds_vol"],0.1,self.actionSubMenu,[None,"change_opt","sounds_vol"])
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_slider"] = tmp_gui
         tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_verify"],(0.5,0,0.4),self.checkMajStarter)
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["maj_verify"] = tmp_gui
@@ -225,8 +230,13 @@ class mainScene(FSM,DirectObject):
         tmp_mod = Actor("mainscene/models/dynamics/main_a_menu.bam"); tmp_mod.reparentTo(render)
         tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
         #décors
-        tmp_mod = base.loader.loadModel("mainscene/models/statics/main_sol.bam"); tmp_mod.reparentTo(render)
-        tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
+        #
+        #tmp_mod = base.loader.loadModel("mainscene/models/statics/main_sol.bam"); tmp_mod.reparentTo(render)
+        #tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
+        #
+        tmp_mod = base.loader.loadModel("mainscene/models/statics/socle_base.bam"); tmp_mod.reparentTo(render)
+        tmp_mod.setPos(0,0,0); self.dic_statics["socle_base"] = tmp_mod
+        #
         tmp_mod = base.loader.loadModel("mainscene/models/statics/main_roofs.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["roofs"] = tmp_mod
         tmp_mod = base.loader.loadModel("mainscene/models/statics/main_arcs_show.bam"); tmp_mod.reparentTo(render)
@@ -387,12 +397,21 @@ class mainScene(FSM,DirectObject):
         pass
     def actionSubMenu(self,val1,val2=None,val3=None):
         if val1 == "quit":
-            self.dic_sounds["main_menu_escape"].play()
+            if self.app.main_config["sounds"]: self.dic_sounds["main_menu_escape"].play()
             self.app.change_cursor("blank"); frame = None
-            if self.states["main_chx"] == 0: frame = "camp_menu"
-            elif self.states["main_chx"] == 1: frame = "mission_menu"
+            if self.states["main_chx"] == 0:
+                #
+                # TODO : vérifier qu'il n'y a rien a faire avant de quitter le sous menu "campagne"
+                #
+                frame = "camp_menu"
+            elif self.states["main_chx"] == 1:
+                #
+                # TODO : vérifier qu'il n'y a rien à faire avant de quitter le sous menu "missions"
+                #
+                frame = "mission_menu"
             elif self.states["main_chx"] == 2: frame = "credits_menu"
-            elif self.states["main_chx"] == 3: frame = "option_menu"
+            elif self.states["main_chx"] == 3:
+                self.actionSubMenu("cancel_opt"); frame = "option_menu"
             self.dic_gui[frame]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
             self.ignoreAll(); self.accept("escape",sys.exit,[0])
             self.dic_anims["cam_move_subtomain"].start()
@@ -403,41 +422,67 @@ class mainScene(FSM,DirectObject):
             # TODO : remise à zéro des options et DGG.DISABLED sur les boutons
             #
         elif val1 == "cancel_opt":
-            #
-            # TODO : annulation des modifications des options
-            #
-            pass
+            if self.app.main_config["sounds"]: self.dic_sounds["main_menu_escape"].play()
+            for key in self.options:
+                if key == "fullscreen":
+                    if self.options[key][0] != self.app.main_config[key][0]:
+                        self.dic_gui["option_menu"]["windowed"]["indicatorValue"] = (0 if self.app.main_config["fullscreen"][0] else 1)
+                        self.dic_gui["option_menu"]["windowed"].setIndicatorValue()
+                        self.dic_gui["option_menu"]["fullscreen"]["indicatorValue"] = (1 if self.app.main_config["fullscreen"][0] else 0)
+                        self.dic_gui["option_menu"]["fullscreen"].setIndicatorValue()
+                else:
+                    if self.options[key] != self.app.main_config[key]:
+                        if key == "lang_chx": self.dic_gui["option_menu"]["lang_opt"].set(self.app.main_config[key])
+                        elif key == "music":
+                            self.dic_gui["option_menu"]["music_mute"]["indicatorValue"] = self.app.main_config[key]
+                            self.dic_gui["option_menu"]["music_mute"].setIndicatorValue()
+                        elif key == "sounds":
+                            self.dic_gui["option_menu"]["sound_mute"]["indicatorValue"] = self.app.main_config[key]
+                            self.dic_gui["option_menu"]["sound_mute"].setIndicatorValue()
+                        elif key == "music_vol": self.dic_gui["option_menu"]["music_slider"]["value"] = self.app.main_config[key]
+                        elif key == "sounds_vol": self.dic_gui["option_menu"]["sound_slider"]["value"] = self.app.main_config[key]
+            for key in self.app.main_config:
+                if key == "fullscreen": self.options[key][0] = self.app.main_config[key][0]
+                else: self.options[key] = self.app.main_config[key]
+            self.dic_gui["option_menu"]["btn_valid"]["state"] = DGG.DISABLED
+            self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.DISABLED
         elif val1 == "valid_opt":
-            #
-            # TODO : vérification qu'il y a bien des options modifiées à sauvegarder
-            #
-            # TODO : si la langue a été changée, modification de l'ensemble des textes de la mainscene
-            #
-            # TODO : sauvegarde des modifications des options dans le fichier de configuration
-            #
-            print "valid options"
-            #
+            if self.app.main_config["sounds"]: self.dic_sounds["main_menu_sel"].play()
+            if self.options["lang_chx"] != self.app.main_config["lang_chx"]:
+                if self.options["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
+                elif self.options["lang_chx"] == 1: self.app.speak = lang.en.en_lang
+                for key1 in self.app.speak:
+                    for key2 in self.app.speak[key1]: self.dic_gui[key1][key2]["text"] = self.app.speak[key1][key2]
+            if self.options["music"] != self.app.main_config["music"]:
+                if self.options["music"]: self.dic_music["mainscene_music"].play()
+                else: self.dic_music["mainscene_music"].stop()
+            if self.options["sounds_vol"] != self.app.main_config["sounds_vol"]:
+                for key in self.dic_sounds: self.dic_sounds[key].setVolume(self.options["sounds_vol"])
+            if self.options["music_vol"] != self.app.main_config["music_vol"]: self.dic_music["mainscene_music"].setVolume(self.options["music_vol"])
+            for key in self.app.main_config:
+                if key == "fullscreen": self.app.main_config[key][0] = self.options[key][0]
+                else: self.app.main_config[key] = self.options[key]
+            mcf = open("arcns_config.json","w"); mcf.write(json.dumps(self.options)); mcf.close()
+            self.dic_gui["option_menu"]["btn_valid"]["state"] = DGG.DISABLED
+            self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.DISABLED
         elif val2 == "change_opt":
-            #
-            # TODO : changement des options
-            #
             if val3 == "win": pass
             elif val3 == "lang":
-                #
-                # TODO : changement de l'option "lang_chx" dans l'attribut des options temporaires
-                #
-                pass
-            elif val3 == "":
-                #
-                #
-                #
-                pass
-            #
-            # TODO : vérification au niveau des options sauvegardées et des options temporaire
-            #
+                if val1 == "Français": self.options["lang_chx"] = 0
+                elif val1 == "English": self.options["lang_chx"] = 1
+            elif val3 == "music_mute": self.options["music"] = bool(val1)
+            elif val3 == "sound_mute": self.options["sounds"] = bool(val1)
+            elif val3 == "music_vol": self.options["music_vol"] = int(self.dic_gui["option_menu"]["music_slider"]["value"]*100)/100.0
+            elif val3 == "sounds_vol": self.options["sounds_vol"] = int(self.dic_gui["option_menu"]["sound_slider"]["value"]*100)/100.0
+            self.dic_gui["option_menu"]["btn_valid"]["state"] = DGG.DISABLED
+            self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.DISABLED
+            for key in self.options:
+                if not self.options[key] == self.app.main_config[key]:
+                    self.dic_gui["option_menu"]["btn_valid"]["state"] = DGG.NORMAL
+                    self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.NORMAL
+                    break
         #
         # TODO : reste des actions ici
-        #
         #
         print "val1 : "+str(val1)
         print "val2 : "+str(val2)

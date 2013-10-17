@@ -18,8 +18,7 @@ import direct.directbase.DirectStart
 
 class ArcnsApp(DirectObject):
     def __init__(self):
-    	base.disableMouse(); base.setBackgroundColor(1,1,1)
-    	self.arcFont = base.loader.loadFont(("" if base.appRunner else "misc/")+"firstv2.ttf")
+    	base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("misc/firstv2.ttf")
         self.cust_mouse_tex = {}
         self.cust_mouse_tex["blank"] = loader.loadTexture("models/cursors/blank_cursor.png")
         self.cust_mouse_tex["main"] = loader.loadTexture("models/cursors/main_cursor.png")
@@ -171,7 +170,7 @@ class ArcnsApp(DirectObject):
         from mainscene.mainscene import mainScene
         self.scene.close(); self.scene = None; self.clearScreen()
         wp = WindowProperties()
-        if self.main_config["fullscreen"]: wp.setFullscreen(False)
+        if self.main_config["fullscreen"][0]: wp.setFullscreen(False)
         wp.setSize(640,480); base.openMainWindow(wp,makeCamera=False,keepCamera=True)
         self.initScreen(); self.change_cursor("blank"); self.scene = mainScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
@@ -179,14 +178,14 @@ class ArcnsApp(DirectObject):
         from gamescene.gamescene import gameScene
         self.scene.close(); self.scene = None; self.clearScreen();
         x = 950; y = 700; wp = WindowProperties()
-        if self.main_config["fullscreen"]:
+        if self.main_config["fullscreen"][0]:
             di = base.pipe.getDisplayInformation()
             for index in range(di.getTotalDisplayModes()):
                 tmp_width = di.getDisplayModeWidth(index); tmp_height = di.getDisplayModeHeight(index)
                 if (float(tmp_width)/tmp_height) > 1 and (float(tmp_width)/tmp_height) < 2:
                     wp.setSize(tmp_width,tmp_height); x = tmp_width; y = tmp_height; break
             wp.setFullscreen(True)
-        elif not self.main_config["fullscreen"]: wp.setSize(950,700)
+        elif not self.main_config["fullscreen"][0]: wp.setSize(950,700)
         base.openMainWindow(wp,makeCamera=False,keepCamera=True)
         self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
