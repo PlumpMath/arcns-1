@@ -10,7 +10,7 @@ from direct.gui.DirectGui import *
 from direct.stdpy.file import *
 from panda3d.core import Vec4, TextNode, CardMaker, NodePath, PandaNode, AmbientLight, WindowProperties
 from panda3d.core import CollisionTraverser, CollisionNode, CollisionHandlerQueue, CollisionRay, BitMask32
-from panda3d.core import Multifile, VirtualFileSystem, Filename
+from panda3d.core import Multifile, VirtualFileSystem, Filename, AntialiasAttrib
 from pandac.PandaModules import TransparencyAttrib
 
 import urllib, sys, os, json
@@ -19,6 +19,7 @@ import direct.directbase.DirectStart
 class ArcnsApp(DirectObject):
     def __init__(self):
     	base.disableMouse(); base.setBackgroundColor(1,1,1); self.arcFont = base.loader.loadFont("misc/firstv2.ttf")
+    	render.setAntialias(AntialiasAttrib.MAuto)
         self.cust_mouse_tex = {}
         self.cust_mouse_tex["blank"] = loader.loadTexture("models/cursors/blank_cursor.png")
         self.cust_mouse_tex["main"] = loader.loadTexture("models/cursors/main_cursor.png")

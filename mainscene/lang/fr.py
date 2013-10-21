@@ -10,7 +10,15 @@ fr_lang = {
     },
     "aux_menu":{"return_btn":"Menu principal"},
     "camp_menu":{
-        "stitre":"Campagne :"
+        "stitre":"Campagne :",
+        "sel_lab":"Choix de l'unité :",
+        "new_unit":"Nouvelle unité :",
+        "crea_unit":"Créer",
+        "save_import":"Importer",
+        "save_export":"Exporter",
+        "used_name":"Ce nom est déjà utilisé",
+        "supp_unit":"Supprimer",
+        "launch":"Jouer !"
     },
     "mission_menu":{
         "stitre":"Missions :"
