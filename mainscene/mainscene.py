@@ -10,7 +10,7 @@ from panda3d.core import Point3, Vec4, TextNode, CardMaker, PointLight, Directio
 from panda3d.core import Multifile, VirtualFileSystem, Filename, Patchfile
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
-import Tkinter, tkFileDialog, json, sys, lang, os, urllib, shutil, time
+import Tkinter, tkFileDialog, json, sys, lang, os, urllib, shutil, time, scenebuilder
 
 class mainScene(FSM,DirectObject):
     """ ****************************
@@ -41,9 +41,16 @@ class mainScene(FSM,DirectObject):
         self.accept("d",self.app.game_screen)
         ###
         #
+        # TODO : changer une partie des éléments ci-dessous pour passer par arcsTools
+        #
+        self.actscene = scenebuilder.mainscene_builder
+        #
+        self.dic_statics = self.app.arcstools.parse_scene(self.actscene)
+        #
+        #
         self.dic_sounds = {}; self.loadSfx()
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"credits_menu":{},"option_menu":{},"aux_menu":{}}; self.loadGUI()
-        self.dic_arrows= {}; self.dic_statics = {}; self.dic_dynamics = {}; self.loadmodels();
+        self.dic_arrows= {}; self.dic_dynamics = {}; self.loadmodels();
         self.dic_anims = {}; self.activeAnim()
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
         self.dic_musics = {}; self.loadMusics(); self.dic_musics["mainscene_music"].setLoop(True)
@@ -93,23 +100,36 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["sel_lab"] = tmp_gui
         tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["new_unit"],(0.1,0,0.25)); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["camp_menu"]["new_unit"] = tmp_gui
-        tmp_gui = self.app.arcEntry((0.2,0,0.1))
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["entry_unit"] = tmp_gui
+        tmp_gui = self.app.arcEntry((0.2,0,0.1)); tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["entry_unit"] = tmp_gui
         tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["crea_unit"],(0.9,0,-0.05),self.actionSubMenu,
             txtalgn=TextNode.ACenter,extraArgs=["launch_game","crea_game"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["crea_unit"] = tmp_gui
-        #
-        # TODO : label de nom d'unité déjà pris
-        #
         tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["used_name"],(0.15,0,-0.2)); tmp_gui.reparentTo(tmp_frame)
         self.dic_gui["camp_menu"]["used_name"] = tmp_gui; tmp_gui.hide()
-        #
-        # TODO : création de la liste des sauvegardes
-        #
-        #
-        # TODO : bouton d'import
-        #
-        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["save_import"],(-0.8,0,0.2),None)
+        it = 1; lst_pos = [(0.4,0,-0.3),(0.6,0,-0.45),(0.8,0,-0.6)]; lst_scale = [0.07,0.06,0.04]
+        for elt in self.states["saves_lst"]:
+            pos = None; scale = None
+            if it > 3:
+                pos = lst_pos[2]; scale = lst_scale[2]
+            else:
+                pos = lst_pos[it-1]; scale = lst_scale[it-1]
+            tmp_gui = self.app.arcLabel(elt["name"],pos,scale); tmp_gui.reparentTo(tmp_frame)
+            self.dic_gui["camp_menu"]["sav_name_"+str(it)] = tmp_gui
+            if it > 3: tmp_gui.hide()
+            timed = ""
+            if elt["time"] < 60: timed = str(elt["time"])+"s"
+            elif elt["time"] < 3600: timed = str((elt["time"] - elt["time"]%60) / 60)+":"+("0" if elt["time"]%60 < 10 else "")+str(elt["time"]%60)
+            elif elt["time"] < 86400:
+                timed = str((elt["time"] - elt["time"]%3600) /3600)+":"+("0" if (elt["time"]%3600) < 600 else "")+str((elt["time"]%3600 - elt["time"]%60)/60)
+                timed += ":"+("0" if elt["time"]%60 < 10 else "")+str(elt["time"]%60)
+            else:
+                days = ("days" if self.app.main_config["lang_chx"] == 1 else "jours")
+                timed = str((elt["time"] - elt["time"]%86400)/86400)+" "+days+" "+str((elt["time"]%86400 - elt["time"]%3600)/3600)+":"+("0" if (elt["time"]%3600) < 600 else "")
+                timed += str((elt["time"]%3600 - elt["time"]%60)/60)+":"+("0" if elt["time"]%60 < 10 else "")+str(elt["time"]%60)
+            tmp_gui = self.app.arcLabel(timed,(0.9,0,0.1),txtalgn=TextNode.ARight); tmp_gui.reparentTo(tmp_frame); tmp_gui.hide()
+            self.dic_gui["camp_menu"]["sav_time_"+str(it)] = tmp_gui
+            it += 1
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["save_import"],(-0.8,0,0.2),self.actionSubMenu,extraArgs=["import_game"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["save_import"] = tmp_gui
         #
         # TODO : bouton d'export
@@ -240,18 +260,18 @@ class mainScene(FSM,DirectObject):
         arr_dn_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_dn_crd.node().setIntoCollideMask(BitMask32.bit(1)); arr_dn_crd.hide()
         arr_dn_crd.node().setTag("arrow","maindn"); arr_dn_crd.reparentTo(self.app.pickly_node); arr_dn_crd.setPos(6.2,1.7,5.2)
         self.dic_arrows["arrow_dn"] = {"node":arr_dn,"card":arr_dn_crd,"status":0,"posn":[6.2,1.5,5],"posh":[6.2,1.7,4.8]}
-        arr_camp_up = render.attachNewNode("sub camp arrow up"); arr_camp_up.setHpr(0,90,-90); arr_camp_up.setPos(12,-3,7.5)
+        arr_camp_up = render.attachNewNode("sub camp arrow up"); arr_camp_up.setHpr(0,90,-90); arr_camp_up.setPos(12,-2.1,7.5)
         self.app.arrow_mod.instanceTo(arr_camp_up); arr_camp_up.reparentTo(render); arr_camp_up.hide()
         arr_camp_up_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_camp_up_crd.node().setIntoCollideMask(BitMask32.bit(1))
         arr_camp_up_crd.node().setTag("arrow","campup"); arr_camp_up_crd.reparentTo(self.app.pickly_node)
-        arr_camp_up_crd.setPos(12.2,-3,7.3); arr_camp_up_crd.setHpr(-90,0,0); arr_camp_up_crd.hide()
-        self.dic_arrows["arrow_camp_up"] = {"node":arr_camp_up,"card":arr_camp_up_crd,"status":0,"posn":[12,-3,7.5],"posh":[12,-3,7.7]}
-        arr_camp_dn = render.attachNewNode("sub camp arrow down"); arr_camp_dn.setHpr(0,-90,-90); arr_camp_dn.setPos(12,-3,1.5)
+        arr_camp_up_crd.setPos(12.2,-2.1,7.3); arr_camp_up_crd.setHpr(-90,0,0); arr_camp_up_crd.hide()
+        self.dic_arrows["arrow_camp_up"] = {"node":arr_camp_up,"card":arr_camp_up_crd,"status":0,"posn":[12,-2.1,7.5],"posh":[12,-2.1,7.7]}
+        arr_camp_dn = render.attachNewNode("sub camp arrow down"); arr_camp_dn.setHpr(0,-90,-90); arr_camp_dn.setPos(12,-2.2,1.5)
         self.app.arrow_mod.instanceTo(arr_camp_dn); arr_camp_dn.reparentTo(render); arr_camp_dn.hide()
         arr_camp_dn_crd = render.attachNewNode(self.app.card_arrow.generate()); arr_camp_dn_crd.node().setIntoCollideMask(BitMask32.bit(1))
         arr_camp_dn_crd.node().setTag("arrow","campdn"); arr_camp_dn_crd.reparentTo(self.app.pickly_node)
-        arr_camp_dn_crd.setPos(12.2,-3,1.6); arr_camp_dn_crd.setHpr(-90,0,0); arr_camp_dn_crd.hide()
-        self.dic_arrows["arrow_camp_dn"] = {"node":arr_camp_dn,"card":arr_camp_dn_crd,"status":0,"posn":[12,-3,1.5],"posh":[12,-3,1.3]}
+        arr_camp_dn_crd.setPos(12.2,-2.2,1.6); arr_camp_dn_crd.setHpr(-90,0,0); arr_camp_dn_crd.hide()
+        self.dic_arrows["arrow_camp_dn"] = {"node":arr_camp_dn,"card":arr_camp_dn_crd,"status":0,"posn":[12,-2.2,1.5],"posh":[12,-2.2,1.3]}
         #
         # TODO : flèches pour le sous-menu "missions" à construire ici
         #
@@ -264,13 +284,8 @@ class mainScene(FSM,DirectObject):
         tmp_mod.pose("load",1); self.dic_dynamics["arcs_main_menu"] = tmp_mod
         tmp_mod = Actor("mainscene/models/dynamics/main_a_menu.bam"); tmp_mod.reparentTo(render)
         tmp_mod.pose("load",1); self.dic_dynamics["arcs_aux_menu"] = tmp_mod
-        #décors
         #
-        #tmp_mod = base.loader.loadModel("mainscene/models/statics/main_sol.bam"); tmp_mod.reparentTo(render)
-        #tmp_mod.setPos(0,0,0); self.dic_statics["sol"] = tmp_mod
-        #
-        tmp_mod = base.loader.loadModel("mainscene/models/statics/socle_base.bam"); tmp_mod.reparentTo(render)
-        tmp_mod.setPos(0,0,0); self.dic_statics["socle_base"] = tmp_mod
+        #décors additionnels (temporaire)
         #
         tmp_mod = base.loader.loadModel("mainscene/models/statics/main_roofs.bam"); tmp_mod.reparentTo(render)
         tmp_mod.setPos(0,0,0); self.dic_statics["roofs"] = tmp_mod
@@ -422,6 +437,14 @@ class mainScene(FSM,DirectObject):
             #
             # TODO : self.accept des touches fléchées et de la touche entrée pour le sous menu "Campagne"
             #
+            self.accept("enter",self.actionSubMenu,["launch_game"])
+            self.accept("arrow_up",self.actionSubMenu,["camp_move","up"])
+            self.accept("arrow_down",self.actionSubMenu,["camp_move","down"])
+            #
+            self.accept("mouse1",self.actionSubMenu,["camp_move","click"])
+            self.accept("wheel_up",self.actionSubMenu,["camp_move","up"])
+            self.accept("wheel_down",self.actionSubMenu,["camp_move","down"])
+            #
             #
             if len(self.states["saves_lst"]) > 0 and self.states["camp_sel"] != len(self.states["saves_lst"]): self.dic_arrows["arrow_camp_up"]["node"].show()
             if self.states["camp_sel"] == 0: self.dic_gui["camp_menu"]["crea_unit"]["state"] = DGG.NORMAL
@@ -500,6 +523,11 @@ class mainScene(FSM,DirectObject):
                 elif self.options["lang_chx"] == 1: self.app.speak = lang.en.en_lang
                 for key1 in self.app.speak:
                     for key2 in self.app.speak[key1]: self.dic_gui[key1][key2]["text"] = self.app.speak[key1][key2]
+                #
+                # TODO : switch entre "days" et "jours" dans les labels des dates des sauvegardes
+                #
+                #
+                #
             if self.options["music"] != self.app.main_config["music"]:
                 if self.options["music"]: self.dic_music["mainscene_music"].play()
                 else: self.dic_music["mainscene_music"].stop()
@@ -529,44 +557,78 @@ class mainScene(FSM,DirectObject):
                     self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.NORMAL
                     break
         elif val1 == "launch_game":
+            self.dic_gui["camp_menu"]["used_name"].hide()
             if val2 == "crea_game" or self.states["camp_sel"] == 0:
                 name = self.dic_gui["camp_menu"]["entry_unit"].get()
                 if name == "": return
                 if not exists("arcns_saves"): os.mkdir("arcns_saves")
                 elif len(self.states["saves_lst"]) > 0:
-                    #
-                    # TODO : vérification du nom
-                    #
-                    print "verification can't be performed"
-                    #
-                    return
-                    #
-                #
+                    for elt in self.states["saves_lst"]:
+                        if elt["name"] == name:
+                            self.dic_gui["camp_menu"]["used_name"].show(); return
                 dte = time.strftime("%d-%m-%Y_%H%M%S",time.localtime())
                 #
                 # DEBUG : voir pour les autres informations à enregistrer
-                sav = {"name":name,"crea_date":dte}
+                sav = {"name":name,"crea_date":dte,"time":0}
                 #
                 fsav = open("arcns_saves/"+dte+".sav","w"); fsav.write(json.dumps(sav)); fsav.close()
                 #
                 # TODO : lancement du jeu
                 #
+                #
+        elif val1 == "camp_move":
+            if not self.nomove: return
+            self.dic_gui["camp_menu"]["used_name"].hide()
             #
-            # TODO : voir pour d'autres actions à réalisées avant de lancer une partie
+            print "camp_move"
+            #
+            if val2 == "click":
+                #
+                # TODO : gestion de la souris, et donc des flèches
+                #
+                print "mouse click"
+                #
+            #
+            if val2 == "up":
+                #
+                print "camp_move up"
+                #
+                # TODO : rotation vers le haut de la liste
+                #
+                pass
+            elif val2 == "down":
+                if self.states["camp_sel"] == 0: return
+                #
+                print "camp_move down"
+                #
+                # TODO : rotation vers le bas de la liste
+                #
+                pass
+            #
+            #
+        elif val1 == "export_game":
+            #
+            root = Tkinter.Tk(); root.withdraw()
+            #
+            # TODO : système d'export d'une partie
+            #
+            print tkFileDialog.askdirectory()
+            #
+            #
+        elif val1 == "import_game":
+            root = Tkinter.Tk(); root.withdraw(); path = tkFileDialog.askopenfilename(filetypes=[("Saves","*.sav"),("All","*")])
+            if path != "":
+                #
+                # TODO : import d'une partie
+                #
+                pass
             #
         #
-        # TODO : reste des actions pour les sous-menus à définir ici
+        # TODO : reste des actions pour le sous-menu "Missions" à définir ici
         #
         print "val1 : "+str(val1)
         print "val2 : "+str(val2)
         print "val3 : "+str(val3)
-        #
-        # NOTE : code pour l'import et l'export
-        """   Tkinter open filepicker and dirpicker
-        root = Tkinter.Tk(); root.withdraw()
-        print tkFileDialog.askopenfilename(filetypes=[("Saves","*.save"),("All","*")])
-        print tkFileDialog.askdirectory()
-        """
         #
     def checkMajStarter(self):
         self.dic_gui["option_menu"]["maj_success"].hide(); self.dic_gui["option_menu"]["maj_quit"].hide()

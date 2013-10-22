@@ -30,8 +30,6 @@ def crea_mf(name):
                 fln = Filename(root+"/"+f[:-3]+"bam"); fln.set_binary(); mf.addSubfile(root+"/"+f[:-3]+"bam",fln,6)
             elif f[-3:] == "wav":
                 fln = Filename(root+"/"+f); fln.set_binary(); mf.addSubfile(root+"/"+f,fln,6)
-            elif f[-4:] == "json":
-                fln = Filename(root+"/"+f); fln.set_text(); mf.addSubfile(root+"/"+f,fln,6)
     mf.close()
 
 crea_mf("mainscene")
