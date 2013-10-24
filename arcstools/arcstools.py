@@ -20,6 +20,11 @@ class arcsTools:
                 tmp_inst = render.attachNewNode("sol_"+str(it)); self.dic_statics[elt].instanceTo(tmp_inst)
                 tmp_inst.setPos(posrot[0]*4.8,posrot[1]*4.8,posrot[2]*4.8); tmp_inst.setHpr(posrot[3],posrot[4],posrot[5])
                 tmp_inst.reparentTo(render); lst_statics["sol_"+str(it)] = tmp_inst
+                #
+                # TODO : génération de la carte si besoin
+                #
+                # TODO : voir pour le navigational mesh ici
+                #
                 it += 1
         for key in ["nord","sud","est","ouest"]:
             for elt in tmp_statics["bords"][key]:
@@ -43,16 +48,18 @@ class arcsTools:
         #
         # TODO : chargement des animations
         #
+        lst_dynamics = {}
         #
         # TODO : création des lumières
         #
         #
         # TODO : retour de la liste des instances
         #
-        print self.dic_statics
-        print lst_statics
+        #print self.dic_statics
+        #print lst_statics
+        #print lst_dynamics
         #
-        return lst_statics
+        return lst_statics, lst_dynamics
         #
     
     def parse_perso(self,perso):

@@ -45,13 +45,14 @@ class mainScene(FSM,DirectObject):
         #
         self.actscene = scenebuilder.mainscene_builder
         #
-        self.dic_statics = self.app.arcstools.parse_scene(self.actscene)
+        self.dic_statics, self.dic_dynamics = self.app.arcstools.parse_scene(self.actscene)
         #
         #
         self.dic_sounds = {}; self.loadSfx()
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"credits_menu":{},"option_menu":{},"aux_menu":{}}; self.loadGUI()
-        self.dic_arrows= {}; self.dic_dynamics = {}; self.loadmodels();
-        self.dic_anims = {}; self.activeAnim()
+        #
+        self.dic_arrows= {}; self.loadmodels(); self.dic_anims = {}; self.activeAnim()
+        #
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
         self.dic_musics = {}; self.loadMusics(); self.dic_musics["mainscene_music"].setLoop(True)
         if self.app.main_config["music"]: self.dic_musics["mainscene_music"].play()
@@ -300,7 +301,7 @@ class mainScene(FSM,DirectObject):
         tmp_anim = self.dic_statics["arcs_shower"].hprInterval(5,Point3(360,0,0),startHpr=Point3(0,0,0))
         self.dic_anims["arcs_shower_pace"] = Sequence(tmp_anim,name="arcs_shower_pace")
         self.dic_anims["cam_move_init"] = camera.posInterval(4,Point3(0,-25,12))
-        self.dic_anims["move_texts"] = None
+        self.dic_anims["move_texts"] = None; self.dic_anims["move_saves"] = None
         self.dic_anims["cam_move_maintosub"] = Parallel(name="main to sub")
         self.dic_anims["cam_move_maintosub"].append(camera.posInterval(2,Point3(-4,-1,7)))
         self.dic_anims["cam_move_maintosub"].append(camera.hprInterval(2,Point3(-90,-10,0)))
@@ -433,19 +434,11 @@ class mainScene(FSM,DirectObject):
         self.app.change_cursor("main"); frame = None; self.accept("escape",self.actionSubMenu,["quit"])
         if self.states["main_chx"] == 0:
             self.dic_arrows["arrow_camp_up"]["status"] = 1; self.dic_arrows["arrow_camp_dn"]["status"] = 1
-            if self.states["camp_sel"] > 0: self.dic_arrows["arrows_camp_dn"]["node"].show()
-            #
-            # TODO : self.accept des touches fléchées et de la touche entrée pour le sous menu "Campagne"
-            #
+            if self.states["camp_sel"] > 0: self.dic_arrows["arrow_camp_dn"]["node"].show()
             self.accept("enter",self.actionSubMenu,["launch_game"])
-            self.accept("arrow_up",self.actionSubMenu,["camp_move","up"])
-            self.accept("arrow_down",self.actionSubMenu,["camp_move","down"])
-            #
+            self.accept("arrow_up",self.actionSubMenu,["camp_move","up"]); self.accept("arrow_down",self.actionSubMenu,["camp_move","down"])
             self.accept("mouse1",self.actionSubMenu,["camp_move","click"])
-            self.accept("wheel_up",self.actionSubMenu,["camp_move","up"])
-            self.accept("wheel_down",self.actionSubMenu,["camp_move","down"])
-            #
-            #
+            self.accept("wheel_up",self.actionSubMenu,["camp_move","up"]); self.accept("wheel_down",self.actionSubMenu,["camp_move","down"])
             if len(self.states["saves_lst"]) > 0 and self.states["camp_sel"] != len(self.states["saves_lst"]): self.dic_arrows["arrow_camp_up"]["node"].show()
             if self.states["camp_sel"] == 0: self.dic_gui["camp_menu"]["crea_unit"]["state"] = DGG.NORMAL
             else:
@@ -526,6 +519,11 @@ class mainScene(FSM,DirectObject):
                 #
                 # TODO : switch entre "days" et "jours" dans les labels des dates des sauvegardes
                 #
+                for it in range(len(self.states["saves_lst"])):
+                        #
+                        #self.dic_gui["sav_time_"+str(it)]
+                        #
+                        pass
                 #
                 #
             if self.options["music"] != self.app.main_config["music"]:
@@ -578,41 +576,66 @@ class mainScene(FSM,DirectObject):
                 #
         elif val1 == "camp_move":
             if not self.nomove: return
-            self.dic_gui["camp_menu"]["used_name"].hide()
-            #
-            print "camp_move"
-            #
             if val2 == "click":
-                #
-                # TODO : gestion de la souris, et donc des flèches
-                #
-                print "mouse click"
-                #
-            #
+                if self.dic_arrows["arrow_camp_up"]["status"] == 2: val2 = "up"
+                elif self.dic_arrows["arrow_camp_dn"]["status"] == 2: val2 = "down"
+                else: return
             if val2 == "up":
-                #
-                print "camp_move up"
-                #
-                # TODO : rotation vers le haut de la liste
-                #
-                pass
+                if len(self.states["saves_lst"]) == self.states["camp_sel"]: return
+                if self.states["camp_sel"] == 0:
+                    self.dic_gui["camp_menu"]["new_unit"].hide(); self.dic_gui["camp_menu"]["entry_unit"].hide()
+                    self.dic_gui["camp_menu"]["crea_unit"]["state"] = DGG.DISABLED
+                    self.dic_gui["camp_menu"]["crea_unit"].hide(); self.dic_gui["camp_menu"]["used_name"].hide()
+                else:
+                    self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].hide()
+                    self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].hide()
+                    self.dic_gui["camp_menu"]["save_export"].hide(); self.dic_gui["camp_menu"]["supp_unit"].hide()
+                    self.dic_gui["camp_menu"]["save_export"]["state"] = DGG.DISABLED
+                    self.dic_gui["camp_menu"]["supp_unit"]["state"] = DGG.DISABLED
+                self.dic_anims["move_saves"] = None; self.dic_anims["move_saves"] = Parallel(name="saves movement")
+                lst_pos = [(0.1,0,0.25),(0.4,0,-0.3),(0.6,0,-0.45)]; lst_scale = [0.08,0.07,0.06]
+                it = 0; self.states["camp_sel"] += 1
+                while (self.states["camp_sel"]+it) <= len(self.states["saves_lst"]) and it < 3:
+                    tmp_anim = self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].posInterval(0.2,Point3(lst_pos[it]))
+                    self.dic_anims["move_saves"].append(tmp_anim)
+                    tmp_anim = self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].scaleInterval(0.2,lst_scale[it])
+                    self.dic_anims["move_saves"].append(tmp_anim)
+                    it += 1
+                if self.states["camp_sel"]+3 <= len(self.states["saves_lst"]): self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+3)].show()
             elif val2 == "down":
                 if self.states["camp_sel"] == 0: return
-                #
-                print "camp_move down"
-                #
-                # TODO : rotation vers le bas de la liste
-                #
-                pass
-            #
-            #
+                self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].hide()
+                self.dic_gui["camp_menu"]["save_export"].hide(); self.dic_gui["camp_menu"]["supp_unit"].hide()
+                self.dic_gui["camp_menu"]["save_export"]["state"] = DGG.DISABLED
+                self.dic_gui["camp_menu"]["supp_unit"]["state"] = DGG.DISABLED
+                self.dic_anims["move_saves"] = None; self.dic_anims["move_saves"] = Parallel(name="saves movement")
+                lst_pos = [(0.4,0,-0.3),(0.6,0,-0.45),(0.8,0,-0.6)]; lst_scale = [0.07,0.06,0.04]; it = 0
+                while (self.states["camp_sel"]+it) <= len(self.states["saves_lst"]) and it < 3:
+                    tmp_anim = self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].posInterval(0.2,Point3(lst_pos[it]))
+                    self.dic_anims["move_saves"].append(tmp_anim)
+                    tmp_anim = self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].scaleInterval(0.2,lst_scale[it])
+                    self.dic_anims["move_saves"].append(tmp_anim)
+                    it += 1
+                self.states["camp_sel"] -= 1
+                if self.states["camp_sel"]+4 <= len(self.states["saves_lst"]): self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+4)].hide()
+            self.dic_gui["camp_menu"]["save_import"]["state"] = DGG.DISABLED
+            self.dic_gui["camp_menu"]["launch"]["state"] = DGG.DISABLED
+            self.ignore("enter"); self.dic_arrows["arrow_camp_up"]["node"].hide(); self.dic_arrows["arrow_camp_dn"]["node"].hide()
+            self.dic_arrows["arrow_camp_up"]["status"] = 1; self.dic_arrows["arrow_camp_dn"]["status"] = 1
+            self.dic_arrows["arrow_camp_up"]["node"].setPos(self.dic_arrows["arrow_camp_up"]["posn"][0],
+                self.dic_arrows["arrow_camp_up"]["posn"][1],self.dic_arrows["arrow_camp_up"]["posn"][2])
+            self.dic_arrows["arrow_camp_dn"]["node"].setPos(self.dic_arrows["arrow_camp_dn"]["posn"][0],
+                self.dic_arrows["arrow_camp_dn"]["posn"][1],self.dic_arrows["arrow_camp_dn"]["posn"][2])
+            if self.app.main_config["sounds"]: self.dic_sounds["main_menu_switch"].play()
+            self.nomove = False; self.dic_anims["move_saves"].start()
+            taskMgr.doMethodLater(0.2,self.reactiveCampaign,"reactive campaign interactions")
         elif val1 == "export_game":
             #
             root = Tkinter.Tk(); root.withdraw()
             #
-            # TODO : système d'export d'une partie
+            path = tkFileDialog.askdirectory()
             #
-            print tkFileDialog.askdirectory()
+            # TODO : système d'export d'une partie
             #
             #
         elif val1 == "import_game":
@@ -630,6 +653,19 @@ class mainScene(FSM,DirectObject):
         print "val2 : "+str(val2)
         print "val3 : "+str(val3)
         #
+    def reactiveCampaign(self,task):
+        self.accept("enter",self.actionSubMenu,["launch_game"])
+        if self.states["camp_sel"] == 0:
+            self.dic_gui["camp_menu"]["new_unit"].show(); self.dic_gui["camp_menu"]["entry_unit"].show()
+            self.dic_gui["camp_menu"]["crea_unit"].show(); self.dic_gui["camp_menu"]["crea_unit"]["state"] = DGG.NORMAL
+        else:
+            self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].show()
+            self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].show()
+            self.dic_gui["camp_menu"]["save_export"].show(); self.dic_gui["camp_menu"]["supp_unit"].show()
+            self.dic_gui["camp_menu"]["save_export"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["supp_unit"]["state"] = DGG.NORMAL
+        self.dic_gui["camp_menu"]["save_import"].show(); self.dic_gui["camp_menu"]["launch"].show()
+        self.dic_gui["camp_menu"]["save_import"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["launch"]["state"] = DGG.NORMAL
+        self.nomove = True; return task.done
     def checkMajStarter(self):
         self.dic_gui["option_menu"]["maj_success"].hide(); self.dic_gui["option_menu"]["maj_quit"].hide()
         self.dic_gui["option_menu"]["maj_retry"].hide(); self.dic_gui["option_menu"]["maj_retry"]["command"] = self.checkMajStarter
