@@ -18,7 +18,9 @@ fr_lang = {
         "save_export":"Exporter",
         "used_name":"Ce nom est déjà utilisé",
         "supp_unit":"Supprimer",
-        "launch":"Jouer !"
+        "launch":"Jouer !",
+        "export_titre":"Export de l'unité :",
+        "export_progress":"export en cours ..."
     },
     "mission_menu":{
         "stitre":"Missions :"

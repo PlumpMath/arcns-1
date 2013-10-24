@@ -18,7 +18,9 @@ en_lang = {
         "save_export":"Export",
         "used_name":"This name is already used",
         "supp_unit":"Remove",
-        "launch":"Play !"
+        "launch":"Play !",
+        "export_titre":"Export of the team :",
+        "export_progress":"Export in progress ..."
     },
     "mission_menu":{
         "stitre":"Missions :"
