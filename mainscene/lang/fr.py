@@ -20,7 +20,20 @@ fr_lang = {
         "supp_unit":"Supprimer",
         "launch":"Jouer !",
         "export_titre":"Export de l'unité :",
-        "export_progress":"export en cours ..."
+        "export_progress":"Export en cours ...",
+        "export_dupli":"Un fichier portant le même nom\nexiste déjà.",
+        "export_nowrite":"Impossible d'écire le fichier\ndans le dossier sélectionné.",
+        "export_success":"L'export a été réalisé\navec succès.",
+        "export_return":"Retour",
+        "import_titre":"Importer une unité :",
+        
+        "supp_titre":"suppression de l'unité :",
+        "supp_question":"Êtes-vous sûr de vouloir supprimer\ncette unité ?",
+        "supp_progress":"Suppression en cours ...",
+        "supp_finish":"L'unité a bien été supprimée.",
+        "supp_cancel":"Annuler",
+        "supp_valid":"Supprimer",
+        "supp_return":"Retour"
     },
     "mission_menu":{
         "stitre":"Missions :"

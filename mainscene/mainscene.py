@@ -39,6 +39,7 @@ class mainScene(FSM,DirectObject):
         #
         # DEBUG : commande pour les tests
         self.accept("d",self.app.game_screen)
+        #self.accept("v",self.testing)
         ###
         #
         # TODO : changer une partie des éléments ci-dessous pour passer par arcsTools
@@ -141,80 +142,64 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["supp_unit"] = tmp_gui; tmp_gui.hide()
         tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["launch"],(-0.3,0,0.2),self.actionSubMenu,extraArgs=["launch_game"])
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["launch"] = tmp_gui
-        #
-        # TODO : frame pour les messages de l'export
-        #
+        #frame d'export
         tmp_frame = DirectFrame(); self.dic_gui["camp_menu"]["export_frame"] = tmp_frame
-        tmp_frame.reparentTo(self.app.voile()#; tmp_frame.hide()
-        #
-        # TODO : label titre de la frame d'export
-        #
+        tmp_frame.reparentTo(self.app.voile); tmp_frame.hide()
         tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_titre"],(0,0,0.5),0.15,TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["export_titre"] = tmp_gui
-        #
-        # TODO : label avec le nom de l'unité en cours d'export
-        #
-        tmp_gui = self.app.arcLabel("test",(0,0,0.4),0.15,TextNode.ACenter); tmp_gui.reparentTo(tmp_frame);
+        tmp_gui = self.app.arcLabel("",(0,0,0.3),0.15,TextNode.ACenter); tmp_gui.reparentTo(tmp_frame);
         self.dic_gui["camp_menu"]["export_name"] = tmp_gui
-        #
-        # TODO : label d'export en cours (scale : 0.1)
-        #
-        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_progress"],(0,0,0),txtalgn=TextNode.ACenter)
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_progress"],(0,0,0),0.1,TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["export_progress"] = tmp_gui
-        #
-        # TODO : label d'existence d'un fichier portant le même nom
-        #
-        # TODO : label d'impossibilité d'écriture du fichier d'export
-        #
-        # TODO : label de succès d'export
-        #
-        # TODO : bouton de retour de l'export vers le menu "Campagne"
-        #
-        #
-        # TODO : frame pour les messages de l'import
-        #
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_dupli"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["export_dupli"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_nowrite"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["export_nowrite"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["export_success"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["export_success"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["export_return"],(0,0,-.4),self.campaignVoile,txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; tmp_gui.hide(); self.dic_gui["camp_menu"]["export_return"] = tmp_gui
+        #frame d'import
         tmp_frame = DirectFrame(); self.dic_gui["camp_menu"]["import_frame"] = tmp_frame
-        tmp_frame.reparentTo(self.app.voile()#; tmp_frame.hide()
+        tmp_frame.reparentTo(self.app.voile); tmp_frame.hide()
         #
         # TODO : label de titre de la frame d'import
         #
-        #tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_titre"],(0,0,0.4),0.15,TextNode.ACenter)
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_titre"],(0,0,0.5),0.15,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["import_titre"] = tmp_gui
         #
-        # TODO : label d'import en cours
+        # TODO : label d'import en cours (scale : 0.1)
         #
-        # TODO : label d'impossibilité de lire le fichier à importer
+        # TODO : label d'impossibilité de lire le fichier à importer (scale : 0.1)
         #
-        # TODO : label de non conformité du fichier à importer
+        # TODO : label de non conformité du fichier à importer (scale : 0.1)
         #
-        # TODO : label de présence d'une sauvegarde portant le même nom que celle importée
+        # TODO : label de présence d'une sauvegarde portant le même nom que celle importée (scale : 0.1)
         #
-        # TODO : label de succès de l'import
+        # TODO : label de succès de l'import (scale : 0.1)
         #
         # TODO : bouton de retour de l'import vers le menu "Campagne"
         #
         #
-        # TODO : frame pour les messages de la suppression
-        #
+        #frame de suppression
         tmp_frame = DirectFrame(); self.dic_gui["camp_menu"]["supp_frame"] = tmp_frame
-        tmp_frame.reparentTo(self.app.voile()#; tmp_frame.hide()
-        #
-        # TODO : label titre de la frame de suppression
-        #
-        #tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["supp_titre"],(0,0,0.4),0.15,TextNode.ACenter)
-        #
-        # TODO : label de validation de la suppression
-        #
-        # TODO : label de suppression en cours
-        #
-        # TODO : label de succès de la suppression
-        #
-        # TODO : bouton d'annulation de la suppression
-        #
-        # TODO : bouton de validation de la suppression
-        #
-        # TODO : bouton de retour de la suppression vers le menu "Campagne"
-        #
-        #
+        tmp_frame.reparentTo(self.app.voile); tmp_frame.hide()
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["supp_titre"],(0,0,0.5),0.15,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["supp_titre"] = tmp_gui
+        tmp_gui = self.app.arcLabel("test_unit",(0,0,0.3),0.15,TextNode.ACenter); tmp_gui.reparentTo(tmp_frame)
+        self.dic_gui["camp_menu"]["supp_name"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["supp_question"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["supp_question"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["supp_progress"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["supp_progress"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["supp_finish"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["supp_finish"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["supp_cancel"],(-0.4,0,-0.4),self.campaignVoile,txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["supp_cancel"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["supp_valid"],(0.4,0,-0.4),self.suppUnit,txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["supp_valid"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["supp_return"],(0,0,-0.4),self.campaignVoile,txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["supp_return"] = tmp_gui
         #mission_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["mission_menu"]["frame"] = tmp_frame
         tmp_gui = self.app.arcLabel(self.app.speak["mission_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
@@ -589,7 +574,10 @@ class mainScene(FSM,DirectObject):
                 for key1 in self.app.speak:
                     for key2 in self.app.speak[key1]: self.dic_gui[key1][key2]["text"] = self.app.speak[key1][key2]
                 for it in range(1,len(self.states["saves_lst"])+1):
-                        self.dic_gui["camp_menu"]["sav_time_"+str(it)]["text"] = self.dic_gui["camp_menu"]["sav_time_"+str(it)]["text"].replace(old_text,new_text)
+                    self.dic_gui["camp_menu"]["sav_time_"+str(it)]["text"] = self.dic_gui["camp_menu"]["sav_time_"+str(it)]["text"].replace(old_text,new_text)
+                #
+                # TODO : ajouter des éléments de traduction certainement présent dans le menu "Mission"
+                #
             if self.options["music"] != self.app.main_config["music"]:
                 if self.options["music"]: self.dic_music["mainscene_music"].play()
                 else: self.dic_music["mainscene_music"].stop()
@@ -699,30 +687,25 @@ class mainScene(FSM,DirectObject):
         elif val1 == "export_game":
             root = Tkinter.Tk(); root.withdraw(); path = tkFileDialog.askdirectory()
             if path != "":
-                #
                 exp_save = self.states["saves_lst"][self.states["camp_sel"]-1]
-                #
                 fln = "/arcns_export_("+exp_save["name"]+").sav"
-                #
+                self.ignoreAll(); self.app.voile.show(); self.dic_gui["camp_menu"]["frame"].hide(); self.nomove = False
+                self.dic_gui["aux_menu"]["frame"].hide(); self.dic_gui["camp_menu"]["export_frame"].show()
+                self.dic_gui["camp_menu"]["export_name"]["text"] = exp_save["name"]
                 if exists(path+fln):
-                    #
-                    # TODO : affichage du voile avec le message que le fichier existe déjà
-                    #
+                    self.accept("enter",self.campaignVoile); self.dic_gui["camp_menu"]["export_progress"].hide()
+                    self.dic_gui["camp_menu"]["export_dupli"].show()
+                    self.dic_gui["camp_menu"]["export_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["export_return"].show()
                     return
-                #
                 try:
-                    #
-                    #fexp = open(path+fln,"w"); fexp.write(json.dumps(exp_save)); fexp.close()
-                    #
-                    # TODO : affichage du voile avec le message que l'export c'est bien déroulé
-                    #
-                    pass
+                    fexp = open(path+fln,"w"); fexp.write(json.dumps(exp_save)); fexp.close()
+                    self.accept("enter",self.campaignVoile); self.dic_gui["camp_menu"]["export_progress"].hide()
+                    self.dic_gui["camp_menu"]["export_success"].show()
+                    self.dic_gui["camp_menu"]["export_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["export_return"].show()
                 except Exception,e:
-                    #
-                    print e
-                    #
-                    # TODO : affichage du voile avec le message que le fichier ne peut être écrit
-                    #
+                    print e; self.accept("enter",self.campaignVoile); self.dic_gui["camp_menu"]["export_progress"].hide()
+                    self.dic_gui["camp_menu"]["export_nowrite"].show()
+                    self.dic_gui["camp_menu"]["export_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["export_return"].show()
         elif val1 == "import_game":
             root = Tkinter.Tk(); root.withdraw(); path = tkFileDialog.askopenfilename(filetypes=[("Saves","*.sav"),("All","*")])
             if path != "":
@@ -732,12 +715,12 @@ class mainScene(FSM,DirectObject):
                 # TODO : import d'une partie
                 #
         elif val1 == "supp_game":
-            #
-            print "suppress a game entering"
-            #
-            # TODO : suppression d'une sauvegarde
-            #
-            pass
+            self.ignoreAll(); self.app.voile.show(); self.dic_gui["camp_menu"]["supp_frame"].show()
+            self.dic_gui["camp_menu"]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
+            self.dic_gui["camp_menu"]["supp_cancel"]["state"] = DGG.NORMAL
+            self.dic_gui["camp_menu"]["supp_valid"]["state"] = DGG.NORMAL
+            self.accept("enter",self.suppUnit); self.accept("escape",self.campaignVoile)
+            self.nomove = False
         #
         # TODO : reste des actions pour le sous-menu "Missions" à définir ici
         #
@@ -761,10 +744,78 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["save_import"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["launch"]["state"] = DGG.NORMAL
         self.nomove = True; return task.done
     def campaignVoile(self):
+        self.app.voile.hide()
+        #nettoyage de la frame d'export
+        self.dic_gui["camp_menu"]["export_frame"].hide(); self.dic_gui["camp_menu"]["export_name"]["text"] = ""
+        self.dic_gui["camp_menu"]["export_progress"].show(); self.dic_gui["camp_menu"]["export_dupli"].hide()
+        self.dic_gui["camp_menu"]["export_nowrite"].hide(); self.dic_gui["camp_menu"]["export_success"].hide()
+        self.dic_gui["camp_menu"]["export_return"]["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["export_return"].hide()
+        #nettoyage de la frame d'import
         #
-        # TODO : sortie du voile et des messages issus du menu "Campagne"
+        # TODO : nettoyage complet de la frame d'import
         #
-        pass
+        self.dic_gui["camp_menu"]["import_frame"].hide()
+        #
+        #
+        #nettoyage de la frame de suppression
+        self.dic_gui["camp_menu"]["supp_frame"].hide(); self.dic_gui["camp_menu"]["supp_name"]["text"] = ""
+        self.dic_gui["camp_menu"]["supp_question"].show()
+        self.dic_gui["camp_menu"]["supp_progress"].hide(); self.dic_gui["camp_menu"]["supp_finish"].hide()
+        self.dic_gui["camp_menu"]["supp_return"].hide(); self.dic_gui["camp_menu"]["supp_return"]["state"] = DGG.DISABLED
+        self.dic_gui["camp_menu"]["supp_cancel"].show(); self.dic_gui["camp_menu"]["supp_cancel"]["state"] = DGG.DISABLED
+        self.dic_gui["camp_menu"]["supp_valid"].show(); self.dic_gui["camp_menu"]["supp_valid"]["state"] = DGG.DISABLED
+        #remise en place du menu "Campagne"
+        self.dic_gui["camp_menu"]["frame"].show(); self.dic_gui["aux_menu"]["frame"].show()
+        self.accept("escape",self.actionSubMenu,["quit"]); self.accept("enter",self.actionSubMenu,["launch_game"])
+        self.accept("arrow_up",self.actionSubMenu,["camp_move","up"]); self.accept("arrow_down",self.actionSubMenu,["camp_move","down"])
+        self.accept("mouse1",self.actionSubMenu,["camp_move","click"])
+        self.accept("wheel_up",self.actionSubMenu,["camp_move","up"]); self.accept("wheel_down",self.actionSubMenu,["camp_move","down"])
+        self.nomove = True
+    def suppUnit(self):
+        self.ignoreAll()
+        self.dic_gui["camp_menu"]["supp_cancel"].hide(); self.dic_gui["camp_menu"]["supp_cancel"]["state"] = DGG.DISABLED
+        self.dic_gui["camp_menu"]["supp_valid"].hide(); self.dic_gui["camp_menu"]["supp_valid"]["state"] = DGG.DISABLED
+        self.dic_gui["camp_menu"]["supp_question"].hide(); self.dic_gui["camp_menu"]["supp_progress"].show()
+        #
+        # TODO : suppression du fichier
+        #
+        supp_save = self.states["saves_lst"][self.states["camp_sel"]-1]
+        #
+        #print supp_save
+        #
+        #os.unlink("arcns_saves/"+supp_save["crea_date"]+".sav")
+        #
+        self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].removeNode()
+        self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].removeNode()
+        #
+        # TODO : mise à jour de la liste sans la sauvegarde supprimée
+        #
+        if len(self.states["saves_lst"]) == 1:
+            self.dic_gui["camp_menu"]["new_unit"].show(); self.dic_gui["camp_menu"]["entry_unit"].show()
+            self.dic_gui["camp_menu"]["save_export"].hide(); self.dic_gui["camp_menu"]["save_export"]["state"] = DGG.DISABLED
+            self.dic_gui["camp_menu"]["supp_unit"].hide(); self.dic_gui["camp_menu"]["supp_unit"]["state"] = DGG.DISABLED
+            self.dic_gui["camp_menu"]["crea_unit"].show(); self.dic_gui["camp_menu"]["crea_unit"]["state"] = DGG.NORMAL
+            self.states["camp_sel"] = 0
+        elif self.states["camp_sel"] == len(self.states["saves_lst"]):
+            self.states["camp_sel"] -= 1
+            self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].show()
+            self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].show()
+        else:
+            #
+            # TODO : déplacement des sauvegardes suivantes
+            #
+            #
+            pass
+        #
+        #
+        # TODO : suppression de la sauvegarde dans la liste en RAM
+        #
+        del self.states["saves_lst"][self.states["camp_sel"]-1]
+        #
+        #
+        self.dic_gui["camp_menu"]["supp_progress"].hide(); self.dic_gui["camp_menu"]["supp_finish"].show()
+        self.dic_gui["camp_menu"]["supp_return"].show(); self.dic_gui["camp_menu"]["supp_return"]["state"] = DGG.NORMAL
+        self.accept("enter",self.campaignVoile)
     def checkMajStarter(self):
         self.dic_gui["option_menu"]["maj_success"].hide(); self.dic_gui["option_menu"]["maj_quit"].hide()
         self.dic_gui["option_menu"]["maj_retry"].hide(); self.dic_gui["option_menu"]["maj_retry"]["command"] = self.checkMajStarter

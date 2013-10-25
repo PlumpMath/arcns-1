@@ -20,7 +20,20 @@ en_lang = {
         "supp_unit":"Remove",
         "launch":"Play !",
         "export_titre":"Export of the team :",
-        "export_progress":"Export in progress ..."
+        "export_progress":"Export in progress ...",
+        "export_dupli":"A file with the same name\nalready exit.",
+        "export_nowrite":"Impossible to write to\nthe selected directory.",
+        "export_success":"The export was done\nwith success.",
+        "export_return":"Return",
+        "import_titre":"Import a team :",
+        
+        "supp_titre":"Remove the team :",
+        "supp_question":"Are you sure you want\nto remove this unit ?",
+        "supp_progress":"Removing ...",
+        "supp_finish":"The team was successfully removed.",
+        "supp_cancel":"Cancel",
+        "supp_valid":"Remove",
+        "supp_return":"Return"
     },
     "mission_menu":{
         "stitre":"Missions :"
