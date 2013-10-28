@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-mainscene_builder = {
+gamescene_builder = {}
+
+gamescene_builder["firstbase"] = {
     "statics":{
         "sol":{
             "mainscene/models/statics/socle_base":[
-                [(0,0,0),(0,0,0)],[(0,1,0),(0,0,0)],[(1,0,0),(0,0,0)],[(-1,0,0),(0,0,0)]
+                [(0,0,0),(0,0,0)],[(1,0,0),(0,0,0)],[(0,1,0),(0,0,0)],[(-1,0,0),(0,0,0)],[(0,-1,0),(0,0,0)]
             ]
         },
         "bords":{
@@ -30,7 +32,7 @@ mainscene_builder = {
         "spawners":{}
     },
     "lights":[
-        [1,(0,0,0),(0,-70,0),True,None,"dir_top"],[1,(0,0,0),(-30,-10,0),True,None,"dir_right"],[1,(0,0,0),(30,-10,0),True,None,"dir_left"],
-        [0,(-8,0,9),(6,-0.5,-1.5),True,None,"spot_aux_menu"]
+        [1,(0,0,0),(0,-10,0),True,camera,"gates_light"]
+        #[(0,0,0),0,0,0]
     ]
 }

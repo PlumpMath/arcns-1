@@ -167,7 +167,7 @@ class ArcnsApp(DirectObject):
             text_shadow=(1,1,1,0.8),text_shadowOffset=(0.07,0.07),relief=DGG.RIDGE,barRelief=DGG.RIDGE,
             barBorderWidth=(0.01,0.01),borderWidth=(0.01,0.01),frameColor=(1,1,1,1),barColor=(0,0.5,1,1))
         return ndp
-    def main_screen(self):
+    def main_screen(self,task):
         from mainscene.mainscene import mainScene
         self.scene.close(); self.scene = None; self.clearScreen()
         wp = WindowProperties()
@@ -175,7 +175,8 @@ class ArcnsApp(DirectObject):
         wp.setSize(640,480); base.openMainWindow(wp,makeCamera=False,keepCamera=True)
         self.initScreen(); self.change_cursor("blank"); self.scene = mainScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
-    def game_screen(self):
+        return task.done
+    def game_screen(self,task):
         from gamescene.gamescene import gameScene
         self.scene.close(); self.scene = None; self.clearScreen();
         x = 950; y = 700; wp = WindowProperties()
@@ -190,6 +191,7 @@ class ArcnsApp(DirectObject):
         base.openMainWindow(wp,makeCamera=False,keepCamera=True)
         self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
+        return task.done
     def crea_persoscene(self):
         from persoscene.persoscene import persoScene
         return persoScene()

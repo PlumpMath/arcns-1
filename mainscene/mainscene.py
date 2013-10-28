@@ -6,8 +6,7 @@ from direct.gui.OnscreenText import OnscreenText
 from direct.gui.DirectGui import DirectFrame, DGG
 from direct.stdpy.file import *
 from direct.actor.Actor import Actor
-from panda3d.core import Point3, Vec4, TextNode, CardMaker, PointLight, DirectionalLight, Spotlight, PerspectiveLens, BitMask32
-from panda3d.core import Multifile, VirtualFileSystem, Filename, Patchfile
+from panda3d.core import Point3, TextNode, CardMaker, BitMask32, Multifile, VirtualFileSystem, Filename, Patchfile
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import Tkinter, tkFileDialog, json, sys, lang, os, urllib, shutil, time, scenebuilder
@@ -27,7 +26,6 @@ class mainScene(FSM,DirectObject):
             try:
             	mcf = open("arcns_config.json","w"); mcf.write(json.dumps(self.app.main_config)); mcf.close()
             except Exception,e: print e
-        self.dic_lights = {}; self.activeLights()
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
         self.states = {"main_chx":0,"main_lst":[],"camp_sel":0,"saves_lst":[]}; self.options = {}
@@ -37,17 +35,11 @@ class mainScene(FSM,DirectObject):
         if exists("arcns_saves"):
             for fsav in os.listdir("arcns_saves"): self.states["saves_lst"].append( json.loads("".join([line.rstrip().lstrip() for line in file("arcns_saves/"+fsav,"rb")])))
         #
-        # DEBUG : commande pour les tests
-        self.accept("d",self.app.game_screen)
-        #self.accept("v",self.testing)
-        ###
-        #
         # TODO : changer une partie des éléments ci-dessous pour passer par arcsTools
         #
         self.actscene = scenebuilder.mainscene_builder
         #
-        self.dic_statics, self.dic_dynamics = self.app.arcstools.parse_scene(self.actscene)
-        #
+        self.dic_statics, self.dic_dynamics, self.dic_lights = self.app.arcstools.parse_scene(self.actscene)
         #
         self.dic_sounds = {}; self.loadSfx()
         self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"credits_menu":{},"option_menu":{},"aux_menu":{}}; self.loadGUI()
@@ -68,15 +60,6 @@ class mainScene(FSM,DirectObject):
     def loadMusics(self):
         self.dic_musics["mainscene_music"] = base.loader.loadMusic("mainscene/musics/main_music.wav")
         self.dic_musics["mainscene_music"].setVolume(self.app.main_config["music_vol"])
-    # NOTE : cette méthode est temporaire, et sera à terme remplacer par l'outils de parsing des scènes
-    def activeLights(self):
-        tmp_node = DirectionalLight("dir_light"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1))
-        tmp_lght = render.attachNewNode(tmp_node); tmp_lght.setHpr(0,-70,0); render.setLight(tmp_lght); self.dic_lights["dir_top"] = tmp_lght
-        tmp_lght = render.attachNewNode(tmp_node); tmp_lght.setHpr(-30,-10,0); render.setLight(tmp_lght); self.dic_lights["dir_right"] = tmp_lght
-        tmp_lght = render.attachNewNode(tmp_node); tmp_lght.setHpr(30,-10,0); render.setLight(tmp_lght); self.dic_lights["dir_left"] = tmp_lght
-        tmp_node = Spotlight("spot_aux_menu"); tmp_node.setColor(Vec4(0.8,0.8,0.8,1)); lens = PerspectiveLens(); tmp_node.setLens(lens)
-        tmp_lght = render.attachNewNode(tmp_node); self.dic_lights["spot_aux_menu"] = tmp_lght
-        render.setLight(tmp_lght); tmp_lght.lookAt(6,-0.5,-1.5); tmp_lght.setPos(-8,0,9)
     def loadGUI(self):
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["main_menu"]["frame"] = tmp_frame
         tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["campaign"],(-0.15,0,-0.2),self.actionMainMenu,scale=0.12)
@@ -354,6 +337,9 @@ class mainScene(FSM,DirectObject):
         self.dic_anims["cam_move_subtomain"] = Parallel(name="sub to main")
         self.dic_anims["cam_move_subtomain"].append(camera.posInterval(2,Point3(0,-25,12)))
         self.dic_anims["cam_move_subtomain"].append(camera.hprInterval(2,Point3(0,-10,0)))
+        self.dic_anims["cam_move_launch"] = Parallel(name="launch the game")
+        self.dic_anims["cam_move_launch"].append(camera.posInterval(4,Point3(0,-62,12)))
+        self.dic_anims["cam_move_launch"].append(camera.hprInterval(2,Point3(0,-10,0)))
         #
         # TODO : suite des animations à charger
         #
@@ -600,7 +586,7 @@ class mainScene(FSM,DirectObject):
                     self.dic_gui["option_menu"]["btn_reset"]["state"] = DGG.NORMAL
                     break
         elif val1 == "launch_game":
-            self.dic_gui["camp_menu"]["used_name"].hide()
+            sav = None; self.dic_gui["camp_menu"]["used_name"].hide()
             if val2 == "crea_game" or self.states["camp_sel"] == 0:
                 name = self.dic_gui["camp_menu"]["entry_unit"].get()
                 if name == "": return
@@ -612,13 +598,14 @@ class mainScene(FSM,DirectObject):
                 dte = time.strftime("%d-%m-%Y_%H%M%S",time.localtime())
                 #
                 # DEBUG : voir pour les autres informations à enregistrer
-                sav = {"name":name,"crea_date":dte,"time":0}
+                sav = {"name":name,"crea_date":dte,"time":0,"saved_place":"firstbase","init":True}
+                #
                 #
                 fsav = open("arcns_saves/"+dte+".sav","w"); fsav.write(json.dumps(sav)); fsav.close()
-                #
-                # TODO : lancement du jeu
-                #
-                #
+            else: sav = self.states["saves_lst"][self.states["camp_sel"]-1]
+            self.dic_arrows["arrow_camp_up"]["node"].hide(); self.dic_arrows["arrow_camp_dn"]["node"].hide()
+            self.dic_gui["aux_menu"]["frame"].hide()
+            self.ignoreAll(); self.nomove = False; self.dic_gui["camp_menu"]["frame"].hide(); self.launchGame(sav)
         elif val1 == "camp_move":
             if not self.nomove: return
             if val2 == "click":
@@ -957,27 +944,20 @@ class mainScene(FSM,DirectObject):
         if self.state == "MainMenu": self.dic_dynamics["arcs_aux_menu"].play("load")
         elif self.state == "SubMenu": self.dic_dynamics["arcs_aux_menu"].play("unload")
         return task.done
+    def initGameTask(self,task):
+        self.dic_dynamics["gates"].play("close_gates"); return task.done
     """ ****************************
     Méthodes pour la sortie du menu principal
     **************************** """
-    def launchGame(self):
-        #
-        # TODO : lancement du jeu. Ce n'est pas un changement de state, c'est une exécution de méthode simple, avec des tasks
-        #
-        # TODO : modification de self.app.speak, pour prendre le bon fichier de traduction pour l'ensemble du jeu dans le package de la gamescene
-        #
-        # TODO : animation de sortie du menu principal
-        #
-        print "launchGame method"
-        #
-        self.ignoreAll(); self.accept("escape",sys.exit,[0])
-        #
-        # TODO : lancement de la task pour lancer game_screen dans main.py, et changer de FSM / scene
+    def launchGame(self,sav,options=None):
+        self.app.change_cursor("blank"); self.ignoreAll(); self.accept("escape",sys.exit,[0])
         #
         # TODO : remplissage de la variable de transition
         #
-        #self.app.transit = {}
+        self.app.transit = {}; self.app.transit["save"] = sav; self.app.transit["place"] = sav["saved_place"]
         #
+        self.dic_dynamics["arcs_aux_menu"].play("unload"); self.dic_anims["cam_move_launch"].start()
+        taskMgr.doMethodLater(3.5,self.initGameTask,"close gates"); taskMgr.doMethodLater(10,self.app.game_screen,"launching the game")
     def close(self):
         self.ignoreAll();  taskMgr.remove(self.mouse_task); self.mouse_task = None
         self.states = None
