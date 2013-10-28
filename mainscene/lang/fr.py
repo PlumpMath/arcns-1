@@ -26,7 +26,11 @@ fr_lang = {
         "export_success":"L'export a été réalisé\navec succès.",
         "export_return":"Retour",
         "import_titre":"Importer une unité :",
-        
+        "import_progress":"Importation en cours ...",
+        "import_fail":"Impossible d'importer la sauvegarde.",
+        "import_dupli":"L'unité importée existe déjà.",
+        "import_success":"Importation terminée avec succès.",
+        "import_return":"Retour",
         "supp_titre":"suppression de l'unité :",
         "supp_question":"Êtes-vous sûr de vouloir supprimer\ncette unité ?",
         "supp_progress":"Suppression en cours ...",

@@ -26,7 +26,11 @@ en_lang = {
         "export_success":"The export was done\nwith success.",
         "export_return":"Return",
         "import_titre":"Import a team :",
-        
+        "import_progress":"Importing ...",
+        "import_fail":"Fail to import the save.",
+        "import_dupli":"The imported team already exists.",
+        "import_success":"Import successed.",
+        "import_return":"Return",
         "supp_titre":"Remove the team :",
         "supp_question":"Are you sure you want\nto remove this unit ?",
         "supp_progress":"Removing ...",

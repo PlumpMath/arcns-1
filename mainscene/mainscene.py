@@ -162,25 +162,18 @@ class mainScene(FSM,DirectObject):
         #frame d'import
         tmp_frame = DirectFrame(); self.dic_gui["camp_menu"]["import_frame"] = tmp_frame
         tmp_frame.reparentTo(self.app.voile); tmp_frame.hide()
-        #
-        # TODO : label de titre de la frame d'import
-        #
         tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_titre"],(0,0,0.5),0.15,TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame); self.dic_gui["camp_menu"]["import_titre"] = tmp_gui
-        #
-        # TODO : label d'import en cours (scale : 0.1)
-        #
-        # TODO : label d'impossibilité de lire le fichier à importer (scale : 0.1)
-        #
-        # TODO : label de non conformité du fichier à importer (scale : 0.1)
-        #
-        # TODO : label de présence d'une sauvegarde portant le même nom que celle importée (scale : 0.1)
-        #
-        # TODO : label de succès de l'import (scale : 0.1)
-        #
-        # TODO : bouton de retour de l'import vers le menu "Campagne"
-        #
-        #
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_progress"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["import_progress"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_fail"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["import_fail"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_dupli"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["import_dupli"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["import_success"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); self.dic_gui["camp_menu"]["import_success"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["import_return"],(0,0,-0.4),self.campaignVoile,txtalgn=TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; tmp_gui.hide(); self.dic_gui["camp_menu"]["import_return"] = tmp_gui
         #frame de suppression
         tmp_frame = DirectFrame(); self.dic_gui["camp_menu"]["supp_frame"] = tmp_frame
         tmp_frame.reparentTo(self.app.voile); tmp_frame.hide()
@@ -709,11 +702,52 @@ class mainScene(FSM,DirectObject):
         elif val1 == "import_game":
             root = Tkinter.Tk(); root.withdraw(); path = tkFileDialog.askopenfilename(filetypes=[("Saves","*.sav"),("All","*")])
             if path != "":
-                #
-                print path
-                #
-                # TODO : import d'une partie
-                #
+                self.ignoreAll(); self.app.voile.show(); self.dic_gui["camp_menu"]["frame"].hide(); self.nomove = False
+                self.dic_gui["aux_menu"]["frame"].hide(); self.dic_gui["camp_menu"]["import_frame"].show()
+                try:
+                    import_save = json.loads("".join([line.rstrip().lstrip() for line in file(path,"rb")]))
+                    for elt in self.states["saves_lst"]:
+                        if elt["name"] == import_save["name"]:
+                            self.dic_gui["camp_menu"]["import_progress"].hide(); self.dic_gui["camp_menu"]["import_dupli"].show()
+                            self.dic_gui["camp_menu"]["import_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["import_return"].show()
+                            self.accept("enter",self.campaignVoile); return
+                    lst_pos = [(0.4,0,-0.3),(0.6,0,-0.45),(0.8,0,-0.6)]; lst_scale = [0.07,0.06,0.04]; act_pos = None; act_scale = None
+                    if self.states["camp_sel"] == len(self.states["saves_lst"]):
+                        act_pos = lst_pos[0]; act_scale = lst_scale[0]
+                    elif self.states["camp_sel"]+1 == len(self.states["saves_lst"]):
+                        act_pos = lst_pos[1]; act_scale = lst_scale[1]
+                    else:
+                        act_pos = lst_pos[2]; act_scale = lst_scale[2]
+                    tmp_gui = self.app.arcLabel(import_save["name"],act_pos,act_scale); tmp_gui.reparentTo(self.dic_gui["camp_menu"]["frame"])
+                    self.dic_gui["camp_menu"]["sav_name_"+str(len(self.states["saves_lst"])+1)] = tmp_gui
+                    if self.states["camp_sel"]+2 < len(self.states["saves_lst"]): tmp_gui.hide()
+                    timed = ""
+                    if import_save["time"] < 60: timed = str(import_save["time"])+"s"
+                    elif import_save["time"] < 3600:
+                        timed = str((import_save["time"] - import_save["time"]%60) / 60)+":"
+                        timed += ("0" if import_save["time"]%60 < 10 else "")+str(import_save["time"]%60)
+                    elif import_save["time"] < 86400:
+                        timed = str((import_save["time"] - import_save["time"]%3600) /3600)+":"+("0" if (import_save["time"]%3600) < 600 else "")
+                        timed += str((import_save["time"]%3600 - import_save["time"]%60)/60)
+                        timed +":"+("0" if import_save["time"]%60 < 10 else "")+str(import_save["time"]%60)
+                    else:
+                        days = ("days" if self.app.main_config["lang_chx"] == 1 else "jours")
+                        timed = str((import_save["time"] - import_save["time"]%86400)/86400)+" "+days+" "
+                        timed += str((import_save["time"]%86400 - import_save["time"]%3600)/3600)+":"+("0" if (import_save["time"]%3600) < 600 else "")
+                        timed += str((import_save["time"]%3600 - import_save["time"]%60)/60)+":"
+                        timed += ("0" if import_save["time"]%60 < 10 else "")+str(import_save["time"]%60)
+                    tmp_gui = self.app.arcLabel(timed,(0.9,0,0.1),txtalgn=TextNode.ARight); tmp_gui.reparentTo(self.dic_gui["camp_menu"]["frame"])
+                    tmp_gui.hide(); self.dic_gui["camp_menu"]["sav_time_"+str(len(self.states["saves_lst"])+1)] = tmp_gui
+                    if not import_save.has_key("ori_date"): import_save["ori_date"] = import_save["crea_date"]
+                    import_save["crea_date"] = time.strftime("%d-%m-%Y_%H%M%S",time.localtime())
+                    fli = open("arcns_saves/"+import_save["crea_date"]+".sav","w"); fli.write(json.dumps(import_save)); fli.close()
+                    self.states["saves_lst"].append(import_save); self.accept("enter",self.campaignVoile)
+                    self.dic_gui["camp_menu"]["import_progress"].hide(); self.dic_gui["camp_menu"]["import_success"].show()
+                    self.dic_gui["camp_menu"]["import_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["import_return"].show()
+                except Exception,e:
+                    print e; self.accept("enter",self.campaignVoile)
+                    self.dic_gui["camp_menu"]["import_progress"].hide(); self.dic_gui["camp_menu"]["import_fail"].show()
+                    self.dic_gui["camp_menu"]["import_return"]["state"] = DGG.NORMAL; self.dic_gui["camp_menu"]["import_return"].show()
         elif val1 == "supp_game":
             self.ignoreAll(); self.app.voile.show(); self.dic_gui["camp_menu"]["supp_frame"].show()
             self.dic_gui["camp_menu"]["frame"].hide(); self.dic_gui["aux_menu"]["frame"].hide()
@@ -751,12 +785,10 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["export_nowrite"].hide(); self.dic_gui["camp_menu"]["export_success"].hide()
         self.dic_gui["camp_menu"]["export_return"]["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["export_return"].hide()
         #nettoyage de la frame d'import
-        #
-        # TODO : nettoyage complet de la frame d'import
-        #
-        self.dic_gui["camp_menu"]["import_frame"].hide()
-        #
-        #
+        self.dic_gui["camp_menu"]["import_frame"].hide(); self.dic_gui["camp_menu"]["import_progress"].show()
+        self.dic_gui["camp_menu"]["import_fail"].hide(); self.dic_gui["camp_menu"]["import_dupli"].hide()
+        self.dic_gui["camp_menu"]["import_success"].hide()
+        self.dic_gui["camp_menu"]["import_return"]["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["import_return"].hide()
         #nettoyage de la frame de suppression
         self.dic_gui["camp_menu"]["supp_frame"].hide(); self.dic_gui["camp_menu"]["supp_name"]["text"] = ""
         self.dic_gui["camp_menu"]["supp_question"].show()
@@ -776,20 +808,9 @@ class mainScene(FSM,DirectObject):
         self.dic_gui["camp_menu"]["supp_cancel"].hide(); self.dic_gui["camp_menu"]["supp_cancel"]["state"] = DGG.DISABLED
         self.dic_gui["camp_menu"]["supp_valid"].hide(); self.dic_gui["camp_menu"]["supp_valid"]["state"] = DGG.DISABLED
         self.dic_gui["camp_menu"]["supp_question"].hide(); self.dic_gui["camp_menu"]["supp_progress"].show()
-        #
-        # TODO : suppression du fichier
-        #
-        supp_save = self.states["saves_lst"][self.states["camp_sel"]-1]
-        #
-        #print supp_save
-        #
-        #os.unlink("arcns_saves/"+supp_save["crea_date"]+".sav")
-        #
+        os.unlink("arcns_saves/"+self.states["saves_lst"][self.states["camp_sel"]-1]["crea_date"]+".sav")
         self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].removeNode()
         self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].removeNode()
-        #
-        # TODO : mise à jour de la liste sans la sauvegarde supprimée
-        #
         if len(self.states["saves_lst"]) == 1:
             self.dic_gui["camp_menu"]["new_unit"].show(); self.dic_gui["camp_menu"]["entry_unit"].show()
             self.dic_gui["camp_menu"]["save_export"].hide(); self.dic_gui["camp_menu"]["save_export"]["state"] = DGG.DISABLED
@@ -801,18 +822,19 @@ class mainScene(FSM,DirectObject):
             self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"])].show()
             self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].show()
         else:
-            #
-            # TODO : déplacement des sauvegardes suivantes
-            #
-            #
-            pass
-        #
-        #
-        # TODO : suppression de la sauvegarde dans la liste en RAM
-        #
+            it = 0; lst_pos = [(0.1,0,0.25),(0.4,0,-0.3),(0.6,0,-0.45)]; lst_scale = [0.08,0.07,0.06]
+            while (self.states["camp_sel"]+it) < len(self.states["saves_lst"]):
+                self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)] = self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it+1)]
+                if it < 3:
+                    self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].setPos(lst_pos[it][0],lst_pos[it][1],lst_pos[it][2])
+                    self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].setScale(lst_scale[it])
+                elif it == 3: self.dic_gui["camp_menu"]["sav_name_"+str(self.states["camp_sel"]+it)].show()
+                self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"]+it)] = self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"]+it+1)]
+                it += 1
+            self.dic_gui["camp_menu"]["sav_time_"+str(self.states["camp_sel"])].show()
+            del self.dic_gui["camp_menu"]["sav_name_"+str(len(self.states["saves_lst"]))]
+            del self.dic_gui["camp_menu"]["sav_time_"+str(len(self.states["saves_lst"]))]
         del self.states["saves_lst"][self.states["camp_sel"]-1]
-        #
-        #
         self.dic_gui["camp_menu"]["supp_progress"].hide(); self.dic_gui["camp_menu"]["supp_finish"].show()
         self.dic_gui["camp_menu"]["supp_return"].show(); self.dic_gui["camp_menu"]["supp_return"]["state"] = DGG.NORMAL
         self.accept("enter",self.campaignVoile)
