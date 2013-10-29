@@ -35,6 +35,22 @@ class arcsTools:
                 #
                 print elt
                 #
+                if key == "nord":
+                    #
+                    #
+                    pass
+                elif key == "sud":
+                    #
+                    #
+                    pass
+                elif key == "est":
+                    #
+                    #
+                    pass
+                elif key == "ouest":
+                    #
+                    #
+                    pass
                 #
                 pass
             for elt in tmp_statics["murs"][key]:
@@ -52,7 +68,13 @@ class arcsTools:
         #
         # TODO : chargement des animations
         #
-        lst_dynamics = {}
+        tmp_dynamics = scene["dynamics"]; lst_dynamics = {}
+        #
+        for elt in tmp_dynamics:
+            #
+            #
+            #
+            pass
         #
         #
         tmp_lights = scene["lights"]; lst_lights = {}
@@ -64,24 +86,11 @@ class arcsTools:
             elif lght[0] == 1:
                 tmp_lght = render.attachNewNode(self.dir_light); tmp_lght.setHpr(lght[2][0],lght[2][1],lght[2][2])
             if lght[3]:
-                if lght[4] != None:
-                    #
-                    #print ""
-                    #
-                    lght[4].setLight(tmp_lght)
-                    #
-                    #
-                    pass
+                if lght[4] != None: lght[4].setLight(tmp_lght)
                 else: render.setLight(tmp_lght)
             lst_lights[lght[5]] = tmp_lght
         #
         #
-        # TODO : retour de la liste des instances
-        #
-        #print self.dic_statics
-        #print lst_statics
-        #print lst_dynamics
-        #print lst_lights
         #
         return lst_statics, lst_dynamics, lst_lights
     

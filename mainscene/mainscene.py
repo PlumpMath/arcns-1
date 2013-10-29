@@ -596,11 +596,7 @@ class mainScene(FSM,DirectObject):
                         if elt["name"] == name:
                             self.dic_gui["camp_menu"]["used_name"].show(); return
                 dte = time.strftime("%d-%m-%Y_%H%M%S",time.localtime())
-                #
-                # DEBUG : voir pour les autres informations à enregistrer
                 sav = {"name":name,"crea_date":dte,"time":0,"saved_place":"firstbase","init":True}
-                #
-                #
                 fsav = open("arcns_saves/"+dte+".sav","w"); fsav.write(json.dumps(sav)); fsav.close()
             else: sav = self.states["saves_lst"][self.states["camp_sel"]-1]
             self.dic_arrows["arrow_camp_up"]["node"].hide(); self.dic_arrows["arrow_camp_dn"]["node"].hide()
@@ -951,10 +947,9 @@ class mainScene(FSM,DirectObject):
     **************************** """
     def launchGame(self,sav,options=None):
         self.app.change_cursor("blank"); self.ignoreAll(); self.accept("escape",sys.exit,[0])
-        #
-        # TODO : remplissage de la variable de transition
-        #
         self.app.transit = {}; self.app.transit["save"] = sav; self.app.transit["place"] = sav["saved_place"]
+        #
+        # TODO : cas du sous-menu "Missions"
         #
         self.dic_dynamics["arcs_aux_menu"].play("unload"); self.dic_anims["cam_move_launch"].start()
         taskMgr.doMethodLater(3.5,self.initGameTask,"close gates"); taskMgr.doMethodLater(10,self.app.game_screen,"launching the game")

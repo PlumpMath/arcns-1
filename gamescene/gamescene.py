@@ -3,7 +3,8 @@
 from direct.showbase.DirectObject import DirectObject
 from direct.fsm.FSM import FSM
 from direct.actor.Actor import Actor
-from panda3d.core import Point3
+from direct.gui.DirectGui import DirectFrame, DGG
+from panda3d.core import Point3, TextNode, BitMask32
 from direct.interval.IntervalGlobal import Sequence, Parallel
 
 import json, sys, lang, os, time, scenebuilder
@@ -14,18 +15,11 @@ class gameScene(FSM,DirectObject):
     **************************** """
     def __init__(self,app):
         self.app = app; FSM.__init__(self,"gameScene")
-        self.defaultTransitions = {"Init":["Base","Cinematic"],"Base":["Cinematic","Explore"],"Cinematic":["Base","Explore"],"Explore":["Base","Cinematic"]}
+        self.defaultTransitions = {"Init":["Base"],"Base":["Cinematic","Explore"],"Cinematic":["Base","Explore"],"Explore":["Base","Cinematic"]}
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
-        #
         self.giroscope = render.attachNewNode("giroscope"); self.giroscope.setPos(0,0,0); self.giroscope.setHpr(0,0,0)
-        #
-        self.giroHpr = [0,0,0]
-        #
-        camera.reparentTo(self.giroscope); camera.setPos(0,-30,25); camera.lookAt(0,0,0)
-        #
-        # TODO : chargement des portes
-        #
+        self.giroHpr = [0,0,0]; self.giroPos = [0,0,0]; camera.reparentTo(self.giroscope); camera.setPos(0,-34,25); camera.lookAt(0,0,0)
         #
         # DEBUG : test du passage de la scène et du display
         self.accept("a",self.returnMainMenu)
@@ -36,22 +30,15 @@ class gameScene(FSM,DirectObject):
         #
         ###
         #
+        self.dic_gui = {"wait_visual":{},"main_visual":{},"tuto_visual":{},"base_visual":{},"explore_visual":{}}
+        self.loadGUI(); self.dic_gui["wait_visual"]["frame"].show()
         self.act_place = self.app.transit["place"]; self.actscene = scenebuilder.gamescene_builder[self.act_place]
-        #
+        self.type_place = 0 #0 : base; 1 : explore; 2 : cinematic
         self.dic_statics, self.dic_dynamics, self.dic_lights = self.app.arcstools.parse_scene(self.actscene,self)
+        self.loadmodels(); self.dic_anims = {}; self.activeAnim()
+        self.dic_sounds = {}; self.loadSfx(); self.dic_musics = {}; self.loadMusics()
         #
-        self.loadmodels()
-        #
-        self.dic_gui = {}
-        #
-        self.dic_sounds = {}
-        #
-        self.dic_musics = {}
-        #
-        # DEBUG : test de l'appel pour la création d'une persoscene
-        perso = self.app.crea_persoscene()
-        ###
-        #
+        # TODO : voir pour une tâche en "again" pour la gestion de la souris
         #
     # DEBUG : retour au menu principal (méthode de test)
     def returnMainMenu(self):
@@ -72,17 +59,73 @@ class gameScene(FSM,DirectObject):
         #
         pass
     def loadGUI(self):
+        #frame de chargement
+        tmp_frame = DirectFrame(); self.dic_gui["wait_visual"]["frame"] = tmp_frame; tmp_frame.hide()
+        tmp_gui = self.app.arcLabel(self.app.speak["wait_visual"]["titre"],(0,0,0.4),0.15,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["wait_visual"]["titre"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["wait_visual"]["waiting_text"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); self.dic_gui["wait_visual"]["waiting_text"] = tmp_gui
+        #frame principale
         #
-        # TODO : chargement de l'interface GUI
+        # TODO : frame principale, présente tout le temps
         #
-        pass
+        tmp_frame = DirectFrame(); self.dic_gui["main_visual"]["frame"] = tmp_frame; tmp_frame.hide()
+        #
+        # TODO : barre de boutons pour quitter, les options, l'aide, etc
+        #
+        tmp_gui = self.app.arcButton(self.app.speak["main_visual"]["quit"],(-0.6,0,0.95),None,0.06,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"]["quit"] = tmp_gui
+        #
+        #
+        #tmp_gui = self.app.arcButton(self.app.speak["main_visual"][""],(-0.4,0,0.95),None,0.06,TextNode.ACenter)
+        #tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"][""] = tmp_gui
+        #
+        #
+        tmp_gui = self.app.arcButton(self.app.speak["main_visual"]["option"],(0.4,0,0.95),None,0.06,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"]["option"] = tmp_gui
+        #
+        #
+        #tmp_gui = self.app.arcButton(self.app.speak["main_visual"][""],(-0.5,0,0.95),None,0.06,TextNode.ACenter)
+        #tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"][""] = tmp_gui
+        #
+        #
+        #frame "tutoriel"
+        #
+        # TODO : frame s'affichant uniquement lors de la création d'une partie
+        #
+        tmp_frame = DirectFrame(); self.dic_gui["tuto_visual"]["frame"] = tmp_frame; tmp_frame.hide()
+        #
+        #
+        #frame "base"
+        #
+        # TODO : frame lorsque l'unité est dans une base
+        #
+        tmp_frame = DirectFrame(); self.dic_gui["base_visual"]["frame"] = tmp_frame; tmp_frame.hide()
+        #
+        #
+        #frame "explore"
+        #
+        # TODO : frame lorsque l'unité est sortie
+        #
+        tmp_frame = DirectFrame(); self.dic_gui["explore_visual"]["frame"] = tmp_frame; tmp_frame.hide()
+        #
+        #
     def loadmodels(self):
+        tmp_mod = Actor("mainscene/models/dynamics/main_gates.bam"); tmp_mod.reparentTo(camera)
+        tmp_mod.setPos(0,14,0); tmp_mod.setHpr(0,90,0); self.gates = tmp_mod
         #
         # TODO : chargement des models additionnels
         #
-        tmp_mod = Actor("mainscene/models/dynamics/main_gates.bam"); tmp_mod.reparentTo(camera)
         #
-        tmp_mod.setPos(0,10,0); tmp_mod.setHpr(0,90,0); self.dic_dynamics["gates"] = tmp_mod
+    def activeAnim(self):
+        self.cam_anim_enter = Parallel(name="cam gates enter")
+        self.cam_anim_enter.append(camera.posInterval(1,Point3(0,-29,25)))
+        self.cam_anim_enter.append(self.gates.posInterval(1,Point3(0,9,0)))
+        self.cam_anim_exit = Parallel(name="cam gates exit")
+        self.cam_anim_exit.append(camera.posInterval(1,Point3(0,-34,25)))
+        self.cam_anim_exit.append(self.gates.posInterval(1,Point3(0,14,0)))
+        #
+        # TODO : chargement des animations
         #
         #
     """ ****************************
@@ -102,19 +145,16 @@ class gameScene(FSM,DirectObject):
     méthodes pour l'état "Init"
     **************************** """
     def enterInit(self):
-    	#
-    	# TODO : méthode d'entrée dans l'état "Init" du gamescene
-    	#
-    	#
-    	print "enterInit"
-    	#
+    	self.gates.play("open_gates"); taskMgr.doMethodLater(7,self.initTasks,"entering cam")
+    	taskMgr.doMethodLater(9,self.initTasks,"change state"); self.task_chx = 0
+    	self.dic_gui["wait_visual"]["frame"].hide()
     def exitInit(self):
-    	#
-    	# TODO : méthode pour sortir de l'état "Init"
-    	#
-    	print "exitInit"
-    	#
     	pass
+    def initTasks(self,task):
+        if self.task_chx == 0:
+            self.cam_anim_enter.start(); self.task_chx = 1
+        elif self.task_chx == 1: self.request("Base")
+        return task.done
     """ ****************************
     méthodes pour l'état "Base"
     **************************** """
@@ -122,7 +162,9 @@ class gameScene(FSM,DirectObject):
     	#
     	# TODO : etat pour afficher une base (enterBase)
     	#
-    	pass
+    	self.app.change_cursor("main"); self.dic_gui["main_visual"]["frame"].show()
+    	#
+    	#
     def exitBase(self):
     	#
     	# TODO : méthode de sortie de l'état "Base"
@@ -161,36 +203,40 @@ class gameScene(FSM,DirectObject):
     """ ****************************
     méthodes pour la sortie de la scène de jeu
     **************************** """
-    def close(self):
-        self.ignoreAll();  taskMgr.remove(self.mouse_task); self.mouse_task = None
-        #
-        """
+    def delete_actscene(self):
         for key in self.dic_anims:
             try: self.dic_anims[key].finish()
             except: pass
             self.dic_anims[key] = None
-        """
-        #
         for key in self.dic_lights:
         	render.clearLight(self.dic_lights[key]); self.dic_lights[key].removeNode()
+        for key in self.dic_statics: self.dic_statics[key].removeNode()
+        for key in self.dic_dynamics: self.dic_dynamics[key].delete()
+        self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
+    def close(self):
+        self.ignoreAll();
+        #
+        #taskMgr.remove(self.mouse_task); self.mouse_task = None
+        #
+        for key in self.dic_sounds:
+            self.dic_sounds[key].stop(); self.dic_sounds[key] = None
+        for key in self.dic_musics:
+            self.dic_musics[key].stop(); self.dic_musics[key] = None
         for key1 in self.dic_gui:
             for key2 in self.dic_gui[key1]:
                 for t in self.dic_gui[key1][key2].options():
                     if t[0] == "command":
                         self.dic_gui[key1][key2]["command"] = None; break
                 self.dic_gui[key1][key2].removeNode()
-        for key in self.dic_statics: self.dic_statics[key].removeNode()
-        for key in self.dic_dynamics: self.dic_dynamics[key].delete()
-        for key in self.dic_sounds:
-            self.dic_sounds[key].stop(); self.dic_sounds[key] = None
-        for key in self.dic_musics:
-            self.dic_musics[key].stop(); self.dic_musics[key] = None
-        self.dic_statics = None; self.dic_dynamics = None; self.dic_anims = None
         self.dic_sounds = None; self.dic_musics = None
         #
         # TODO : suppression des éléments non classés
         #
-        self.giroscope.removeNode()
+        self.giroscope.removeNode(); self.gates.delete()
+        try:
+            self.cam_anim_enter.finish(); self.cam_anim_exit.finish()
+        except: pass
+        del self.cam_anim_exit; del self.cam_anim_enter
         #
     # DEBUG : cette méthode n'aura plus d'utilité une fois le code de ce fichier terminé
     def __del__(self):

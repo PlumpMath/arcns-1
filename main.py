@@ -189,7 +189,7 @@ class ArcnsApp(DirectObject):
             wp.setFullscreen(True)
         elif not self.main_config["fullscreen"][0]: wp.setSize(950,700)
         base.openMainWindow(wp,makeCamera=False,keepCamera=True)
-        self.initScreen(x,y); self.change_cursor("main"); self.scene = gameScene(self); self.scene.request("Init")
+        self.initScreen(x,y); self.change_cursor("blank"); self.scene = gameScene(self); self.scene.request("Init")
         base.mouseWatcherNode.setGeometry(self.cust_mouse.node())
         return task.done
     def crea_persoscene(self):

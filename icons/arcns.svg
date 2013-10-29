@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="40">
+	<defs>
+		<circle cx="0" cy="0" r="5" stroke="white" stroke-width="7" id="circ_b" />
+		<circle cx="0" cy="0" r="5" fill="#08f" stroke="black" stroke-width="1" id="circ_f" />
+		<line x1="2" y1="0" x2="23" y2="0" stroke="white" stroke-width="10" id="line_b" />
+		<line x1="3" y1="0" x2="22" y2="0" stroke="black" stroke-width="4" id="line_f" />
+	</defs>
+	<g transform="translate(20,20),scale(0.5)">
+		<use xlink:href="#circ_b" id="lg_c0_b" />
+		<use xlink:href="#circ_b" id="lg_c1_b" transform="rotate(-90),translate(25)" />
+		<use xlink:href="#circ_b" id="lg_c2_b" transform="rotate(-30),translate(25)" />
+		<use xlink:href="#circ_b" id="lg_c3_b" transform="rotate(30),translate(25)" />
+		<use xlink:href="#circ_b" style="display:none;" id="lg_c4_b" transform="rotate(90),translate(25)" />
+		<use xlink:href="#circ_b" id="lg_c5_b" transform="rotate(150),translate(25)" />
+		<use xlink:href="#circ_b" id="lg_c6_b" transform="rotate(-150),translate(25)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li0_b" transform="rotate(-90)" />
+		<use xlink:href="#line_b" id="lg_li1_b" transform="rotate(-30)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li2_b" transform="rotate(30)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li3_b" transform="rotate(90)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li4_b" transform="rotate(150)" />
+		<use xlink:href="#line_b" id="lg_li5_b" transform="rotate(-150)" />
+		<use xlink:href="#line_b" id="lg_li6_b" transform="translate(0,-25),rotate(30)" />
+		<use xlink:href="#line_b" id="lg_li7_b" transform="rotate(-30),translate(25),rotate(120)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li8_b" transform="translate(0,25),rotate(-30)" />
+		<use xlink:href="#line_b" style="display:none;" id="lg_li9_b" transform="translate(0,25),rotate(-150)" />
+		<use xlink:href="#line_b" id="lg_li10_b" transform="rotate(150),translate(25),rotate(120)" />
+		<use xlink:href="#line_b" id="lg_li11_b" transform="translate(0,-25),rotate(150)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li0_f" transform="rotate(-90)" />
+		<use xlink:href="#line_f" id="lg_li1_f" transform="rotate(-30)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li2_f" transform="rotate(30)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li3_f" transform="rotate(90)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li4_f" transform="rotate(150)" />
+		<use xlink:href="#line_f" id="lg_li5_f" transform="rotate(-150)" />
+		<use xlink:href="#line_f" id="lg_li6_f" transform="translate(0,-25),rotate(30)" />
+		<use xlink:href="#line_f" id="lg_li7_f" transform="rotate(-30),translate(25),rotate(120)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li8_f" transform="translate(0,25),rotate(-30)" />
+		<use xlink:href="#line_f" style="display:none;" id="lg_li9_f" transform="translate(0,25),rotate(-150)" />
+		<use xlink:href="#line_f" id="lg_li10_f" transform="rotate(150),translate(25),rotate(120)" />
+		<use xlink:href="#line_f" id="lg_li11_f" transform="translate(0,-25),rotate(150)" />
+		<use xlink:href="#circ_f" id="lg_c0_f" />
+		<use xlink:href="#circ_f" id="lg_c1_f" transform="rotate(-90),translate(25)" />
+		<use xlink:href="#circ_f" id="lg_c2_f" transform="rotate(-30),translate(25)" />
+		<use xlink:href="#circ_f" id="lg_c3_f" transform="rotate(30),translate(25)" />
+		<use xlink:href="#circ_f" style="display:none;" id="lg_c4_f" transform="rotate(90),translate(25)" />
+		<use xlink:href="#circ_f" id="lg_c5_f" transform="rotate(150),translate(25)" />
+		<use xlink:href="#circ_f" id="lg_c6_f" transform="rotate(-150),translate(25)" />
+	</g>
+</svg>
