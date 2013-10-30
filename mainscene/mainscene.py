@@ -28,29 +28,19 @@ class mainScene(FSM,DirectObject):
             except Exception,e: print e
         if self.app.main_config["lang_chx"] == 0: self.app.speak = lang.fr.fr_lang
         elif self.app.main_config["lang_chx"] == 1: self.app.speak = lang.en.en_lang
-        self.states = {"main_chx":0,"main_lst":[],"camp_sel":0,"saves_lst":[]}; self.options = {}
+        self.states = {"main_chx":0,"main_lst":["campaign","mission","credits","options","quit"],"camp_sel":0,"saves_lst":[]}; self.options = {}
         for key in self.app.main_config:
             if key == "fullscreen": self.options[key] = [self.app.main_config[key][0]]
             else: self.options[key] = self.app.main_config[key]
         if exists("arcns_saves"):
             for fsav in os.listdir("arcns_saves"): self.states["saves_lst"].append( json.loads("".join([line.rstrip().lstrip() for line in file("arcns_saves/"+fsav,"rb")])))
-        #
-        # TODO : changer une partie des éléments ci-dessous pour passer par arcsTools
-        #
         self.actscene = scenebuilder.mainscene_builder
-        #
         self.dic_statics, self.dic_dynamics, self.dic_lights = self.app.arcstools.parse_scene(self.actscene)
-        #
-        self.dic_sounds = {}; self.loadSfx()
-        self.dic_gui = {"main_menu":{},"camp_menu":{},"mission_menu":{},"credits_menu":{},"option_menu":{},"aux_menu":{}}; self.loadGUI()
-        #
+        self.dic_sounds = {}; self.loadSfx(); guibuild = self.structureGUI(); self.dic_gui = self.app.arcstools.parse_gui(guibuild)
         self.dic_arrows= {}; self.loadmodels(); self.dic_anims = {}; self.activeAnim()
-        #
         self.vers_txt = OnscreenText(text=self.version,font=self.app.arcFont,pos=(1.15,-0.95),fg=(0,0,0,1),bg=(1,1,1,0.8))
         self.dic_musics = {}; self.loadMusics(); self.dic_musics["mainscene_music"].setLoop(True)
         if self.app.main_config["music"]: self.dic_musics["mainscene_music"].play()
-        #
-        #
         self.mouse_task = taskMgr.add(self.mouseTask,"mainscene mouse task")
     def loadSfx(self):
         self.dic_sounds["main_menu_sel"] = base.loader.loadSfx("mainscene/sounds/son_main_menu_sel.wav")
@@ -60,23 +50,131 @@ class mainScene(FSM,DirectObject):
     def loadMusics(self):
         self.dic_musics["mainscene_music"] = base.loader.loadMusic("mainscene/musics/main_music.wav")
         self.dic_musics["mainscene_music"].setVolume(self.app.main_config["music_vol"])
-    def loadGUI(self):
-        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["main_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["campaign"],(-0.15,0,-0.2),self.actionMainMenu,scale=0.12)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["campaign"] = tmp_gui; self.states["main_lst"].append("campaign")
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["mission"],(-0.19,0,-0.34),self.actionMainMenu,scale=0.1)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["mission"] = tmp_gui; self.states["main_lst"].append("mission")
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["credits"],(-0.26,0,-0.47),self.actionMainMenu,scale=0.09)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["credits"] = tmp_gui; self.states["main_lst"].append("credits")
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["options"],(-0.35,0,-0.58),self.actionMainMenu,scale=0.07)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["options"] = tmp_gui; self.states["main_lst"].append("options")
-        tmp_gui = self.app.arcButton(self.app.speak["main_menu"]["quit"],(-0.41,0,-0.66),self.actionMainMenu,scale=0.05)
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED
-        self.dic_gui["main_menu"]["quit"] = tmp_gui; self.states["main_lst"].append("quit")
+    def structureGUI(self):
+        opt_lang_txt = ""
+        if self.options["lang_chx"] == 0: opt_lang_txt = "Français"
+        elif self.options["lang_chx"] == 1: opt_lang_txt = "English"
+        mainscene_gui = {
+            "main_menu":{
+                "frame":{
+                    "hide":True,"parent":None,"elts":{
+                        "campaign":{"type":"button","pos":(-0.15,0,-0.2),"cmd":self.actionMainMenu,"scale":0.12,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False},
+                        "mission":{"type":"button","pos":(-0.19,0,-0.34),"cmd":self.actionMainMenu,"scale":0.1,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False},
+                        "credits":{"type":"button","pos":(-0.26,0,-0.47),"cmd":self.actionMainMenu,"scale":0.09,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False},
+                        "options":{"type":"button","pos":(-0.35,0,-0.58),"cmd":self.actionMainMenu,"scale":0.07,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False},
+                        "quit":{"type":"button","pos":(-0.41,0,-0.66),"cmd":self.actionMainMenu,"scale":0.05,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False}
+                    }
+                }
+            },
+            "camp_menu":{
+                #
+                #"frame":{
+                #    "hide":True,"parent":None,"elts":{
+                #        #"stitre":{"type":"label"}
+                #    }
+                #}
+                #
+            },
+            "mission_menu":{
+                "frame":{
+                    "hide":True,"parent":None,"elts":{
+                        "stitre":{"type":"label","pos":(-0.8,0,0.7),"scale":0.15,"algn":TextNode.ALeft,"hide":False},
+                        #
+                        # TODO : élément pour le sous-menu "Mission à construire ici
+                        #
+                        # DEBUG : label temporaire "W.I.P." pour le sous menu "Missions"
+                        "wip":{"type":"label","pos":(0,0,0),"scale":0.2,"algn":TextNode.ALeft,"hide":False,"text":"W.I.P."}
+                        ###
+                        #
+                    }
+                }
+                #
+                # TODO : s'il y a d'autres frames à générer pour le sous-menu "Missions", elles seront ici
+                #
+            },
+            "credits_menu":{
+                "frame":{
+                    "hide":True,"parent":None,"elts":{
+                        "stitre":{"type":"label","pos":(-0.8,0,0.7),"scale":0.14,"algn":TextNode.ACenter,"hide":False},
+                        "graph_lab":{"type":"label","pos":(-0.5,0,0.4),"scale":0.1,"algn":TextNode.ACenter,"hide":False},
+                        "graph_name":{"type":"label","pos":(-0.5,0,0.3),"scale":0.08,"algn":TextNode.ACenter,"hide":False},
+                        "dev_lab":{"type":"label","pos":(0.5,0,0.4),"scale":0.1,"algn":TextNode.ACenter,"hide":False},
+                        "dev_name":{"type":"label","pos":(0.5,0,0.3),"scale":0.08,"algn":TextNode.ACenter,"hide":False},
+                        "trad_lab":{"type":"label","pos":(-0.5,0,-0.1),"scale":0.1,"algn":TextNode.ACenter,"hide":False},
+                        "trad_name":{"type":"label","pos":(-0.5,0,-0.2),"scale":0.08,"algn":TextNode.ACenter,"hide":False},
+                        "music_lab":{"type":"label","pos":(0.5,0,-0.1),"scale":0.1,"algn":TextNode.ACenter,"hide":False},
+                        "music_name":{"type":"label","pos":(0.5,0,-0.2),"scale":0.08,"algn":TextNode.ACenter,"hide":False}
+                    }
+                }
+            },
+            "option_menu":{
+                "frame":{
+                    "hide":True,"parent":None,"elts":{
+                        "stitre":{"type":"label","pos":(-0.8,0,0.7),"scale":0.15,"algn":TextNode.ALeft,"hide":False},
+                        "lst_radio":{"type":"radio","scale":0.08,"algn":TextNode.ALeft,
+                            "elts":[
+                                ["windowed",self.options["fullscreen"],[False],self.actionSubMenu,["","change_opt","win"],(-1,0,0.4)],
+                                ["fullscreen",self.options["fullscreen"],[True],self.actionSubMenu,["","change_opt","win"],(-1,0,0.3)]
+                            ]
+                        },
+                        "lang_chx":{"type":"label","pos":(-1.05,0,0.15),"scale":0.08,"algn":TextNode.ALeft,"hide":False},
+                        "opt_optmenu":{"type":"optmenu","pos":(-0.45,0,0.15),"items":["Français","English"],"init":self.options["lang_chx"],"cmd":self.actionSubMenu,
+                            "scale":0.08,"change":1,"algn":TextNode.ALeft,"extra":["change_opt","lang"],"hide":False,"text":opt_lang_txt},
+                        "music_vol":{"type":"label","pos":(-1.05,0,-0.2),"scale":0.08,"algn":TextNode.ALeft,"hide":False},
+                        "music_mute":{"type":"checkbox","pos":(0.3,0,-0.2),"cmd":self.actionSubMenu,"val":(1 if self.options["music"] else 0),"scale":0.08,
+                            "box":"left","algn":TextNode.ALeft,"extra":["change_opt","music_mute"],"hide":False},
+                        "music_slider":{"type":"slider","pos":(-0.3,0,-0.3),"scale":1,"inter":(0,1),"init":self.options["music_vol"],"pas":0.1,
+                            "cmd":self.actionSubMenu,"extra":[None,"change_opt","music_vol"],"orient":DGG.HORIZONTAL,"hide":False},
+                        "sound_vol":{"type":"label","pos":(-1.05,0,-0.5),"scale":0.08,"algn":TextNode.ALeft,"hide":False},
+                        "sound_mute":{"type":"checkbox","pos":(0.3,0,-0.5),"cmd":self.actionSubMenu,"val":(1 if self.options["sounds"] else 0),"scale":0.08,
+                            "box":"left","algn":TextNode.ALeft,"extra":["change_opt","sound_mute"],"hide":False},
+                        "sound_slider":{"type":"slider","pos":(-0.3,0,-0.6),"scale":1,"inter":(0,1),"init":self.options["sounds_vol"],"pas":0.1,
+                            "cmd":self.actionSubMenu,"extra":[None,"change_opt","sounds_vol"],"orient":DGG.HORIZONTAL,"hide":False},
+                        "maj_verify":{"type":"button","pos":(0.5,0,0.4),"cmd":self.checkMajStarter,"scale":0.08,"algn":TextNode.ALeft,"extra":[],"sound":None,"hide":False,"disabled":False},
+                        "btn_valid":{"type":"button","pos":(-0.9,0,-0.8),"cmd":self.actionSubMenu,"scale":0.08,"algn":TextNode.ALeft,"extra":["valid_opt"],"sound":None,"hide":False},
+                        "btn_reset":{"type":"button","pos":(-0.5,0,-0.8),"cmd":self.actionSubMenu,"scale":0.08,"algn":TextNode.ALeft,"extra":["cancel_opt"],"sound":None,"hide":False}
+                    }
+                },
+                "maj_frame":{
+                    "hide":True,"parent":self.app.voile,"elts":{
+                        "maj_stitre":{"type":"label","pos":(0,0,0.4),"scale":0.15,"algn":TextNode.ACenter,"hide":False},
+                        "maj_progress":{"type":"waitbar","pos":(0,0,0),"scale":0.8,"range":4,"val":0,"hide":False},
+                        "maj_err0":{"type":"label","pos":(0,0,0.1),"scale":0.1,"algn":TextNode.ACenter,"hide":True},
+                        "maj_retry":{"type":"button","pos":(-0.3,0,-0.1),"cmd":self.checkMajStarter,"scale":0.08,"algn":TextNode.ACenter,"extra":[],"sound":None,"hide":True}#,
+                        #
+                        #"maj_cancel":{"type":"button","pos":(
+                        #
+                        #
+                    }
+                }
+            },
+            "aux_menu":{
+                "frame":{
+                    "hide":True,"parent":None,"elts":{
+                        "return_btn":{"type":"button","pos":(0,0,-0.8),"cmd":self.actionSubMenu,"scale":0.08,"algn":TextNode.ALeft,"extra":["quit"],"sound":None,"hide":False}
+                    }
+                }
+            }
+        }
+        #
+        """
+        #formulaire de mise à jour
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_cancel"],(0.3,0,-0.1),self.cancelMaj,txtalgn=TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_cancel"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_err1"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err1"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_nomaj"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_nomaj"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_update"],(0,0,0.1),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_update"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_doit"],(-0.3,0,-0.1),self.doMajStarter,txtalgn=TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_doit"] = tmp_gui
+        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,4,0,self.app.speak["option_menu"]["maj_upgrade"])
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_upgrade"] = tmp_gui
+        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_success"],(0,0,0),0.1,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_success"] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_quit"],(0,0,-0.4),self.endingMaj,0.11,TextNode.ACenter)
+        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_quit"] = tmp_gui
         #camp_menu
         tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["camp_menu"]["frame"] = tmp_frame
         tmp_gui = self.app.arcLabel(self.app.speak["camp_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
@@ -176,108 +274,9 @@ class mainScene(FSM,DirectObject):
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["supp_valid"] = tmp_gui
         tmp_gui = self.app.arcButton(self.app.speak["camp_menu"]["supp_return"],(0,0,-0.4),self.campaignVoile,txtalgn=TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame); tmp_gui.hide(); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["camp_menu"]["supp_return"] = tmp_gui
-        #mission_menu
-        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["mission_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcLabel(self.app.speak["mission_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["mission_menu"]["stitre"] = tmp_gui
+        """
         #
-        # TODO : éléments gui pour le mission_menu à construire ici
-        #
-        # DEBUG : label temporaire "W.I.P." pour le sous menu "Missions"
-        tmp_gui = self.app.arcLabel("W.I.P.",(0,0,0),0.2); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["mission_menu"]["wip"] = tmp_gui
-        ###
-        #
-        #credits_menu
-        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["credits_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["credits_menu"]["stitre"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["graph_lab"],(-0.5,0,0.4),0.1,TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["graph_lab"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["graph_name"],(-0.5,0,0.3),txtalgn=TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["graph_name"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["dev_lab"],(0.5,0,0.4),0.1,TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["dev_lab"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["dev_name"],(0.5,0,0.3),txtalgn=TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["dev_name"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["trad_lab"],(-0.5,0,-0.1),0.1,TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["trad_lab"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["trad_name"],(-0.5,0,-0.2),txtalgn=TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["trad_name"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["music_lab"],(0.5,0,-0.1),0.1,TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["music_lab"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["credits_menu"]["music_name"],(0.5,0,-0.2),txtalgn=TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["credits_menu"]["music_name"] = tmp_gui
-        #option_menu
-        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["option_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["stitre"],(-0.8,0,0.7),0.15); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["option_menu"]["stitre"] = tmp_gui
-        lst_radio = [
-            [self.app.speak["option_menu"]["windowed"],self.options["fullscreen"],[False],
-                self.actionSubMenu,["","change_opt","win"],(-1,0,0.4),"windowed"],
-            [self.app.speak["option_menu"]["fullscreen"],self.options["fullscreen"],[True],
-                self.actionSubMenu,["","change_opt","win"],(-1,0,0.3),"fullscreen"]
-        ]
-        self.app.arcRadioButton(lst_radio,tmp_frame,self.dic_gui["option_menu"])
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["lang_chx"],(-1.05,0,0.15)); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["option_menu"]["lang_chx"] = tmp_gui
-        txt = None
-        if self.options["lang_chx"] == 0: "Français"
-        elif self.options["lang_chx"] == 1: "English"
-        tmp_gui = self.app.arcOptMenu(txt,(-0.45,0,0.15),["Français","English"],self.options["lang_chx"],
-            self.actionSubMenu,extraArgs=["change_opt","lang"])
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["lang_opt"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["music_vol"],(-1.05,0,-0.2)); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["option_menu"]["music_vol"] = tmp_gui
-        tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["music_mute"],(0.3,0,-0.2),
-            self.actionSubMenu,(1 if self.options["music"] else 0),extraArgs=["change_opt","music_mute"])
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["music_mute"] = tmp_gui
-        tmp_gui = self.app.arcSlider((-0.3,0,-0.3),1,(0,1),self.options["music_vol"],0.1,self.actionSubMenu,[None,"change_opt","music_vol"])
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["music_slider"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["sound_vol"],(-1.05,0,-0.5)); tmp_gui.reparentTo(tmp_frame)
-        self.dic_gui["option_menu"]["sound_vol"] = tmp_gui
-        tmp_gui = self.app.arcCheckButton(self.app.speak["option_menu"]["sound_mute"],(0.3,0,-0.5),
-            self.actionSubMenu,(1 if self.options["sounds"] else 0),extraArgs=["change_opt","sound_mute"])
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_mute"] = tmp_gui
-        tmp_gui = self.app.arcSlider((-0.3,0,-0.6),1,(0,1),self.options["sounds_vol"],0.1,self.actionSubMenu,[None,"change_opt","sounds_vol"])
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["sound_slider"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_verify"],(0.5,0,0.4),self.checkMajStarter)
-        tmp_gui.reparentTo(tmp_frame); self.dic_gui["option_menu"]["maj_verify"] = tmp_gui
-        #formulaire de mise à jour
-        tmp_frame2 = DirectFrame(); self.dic_gui["option_menu"]["maj_frame"] = tmp_frame2
-        tmp_frame2.hide(); tmp_frame2.reparentTo(self.app.voile)
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_stitre"],(0,0,0.4),0.15,TextNode.ACenter)
-        tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_stitre"] = tmp_gui
-        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,4,0,self.app.speak["option_menu"]["maj_progress"])
-        tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_progress"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_err0"],(0,0,0.1),0.1,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err0"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_retry"],(-0.3,0,-0.1),self.checkMajStarter,txtalgn=TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_retry"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_cancel"],(0.3,0,-0.1),self.cancelMaj,txtalgn=TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_cancel"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_err1"],(0,0,0.1),0.1,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_err1"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_nomaj"],(0,0,0.1),0.1,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_nomaj"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_update"],(0,0,0.1),0.1,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_update"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_doit"],(-0.3,0,-0.1),self.doMajStarter,txtalgn=TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_doit"] = tmp_gui
-        tmp_gui = self.app.arcWaitBar((0,0,0),0.8,4,0,self.app.speak["option_menu"]["maj_upgrade"])
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_upgrade"] = tmp_gui
-        tmp_gui = self.app.arcLabel(self.app.speak["option_menu"]["maj_success"],(0,0,0),0.1,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_success"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["maj_quit"],(0,0,-0.4),self.endingMaj,0.11,TextNode.ACenter)
-        tmp_gui.hide(); tmp_gui.reparentTo(tmp_frame2); self.dic_gui["option_menu"]["maj_quit"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_valid"],(-0.9,0,-0.8),self.actionSubMenu,extraArgs=["valid_opt"])
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_valid"] = tmp_gui
-        tmp_gui = self.app.arcButton(self.app.speak["option_menu"]["btn_reset"],(-0.5,0,-0.8),self.actionSubMenu,extraArgs=["cancel_opt"])
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["option_menu"]["btn_reset"] = tmp_gui
-        #aux_menu
-        tmp_frame = DirectFrame(); tmp_frame.hide(); self.dic_gui["aux_menu"]["frame"] = tmp_frame
-        tmp_gui = self.app.arcButton(self.app.speak["aux_menu"]["return_btn"],(0,0,-0.8),self.actionSubMenu,extraArgs=["quit"])
-        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["aux_menu"]["return_btn"] = tmp_gui
+        return mainscene_gui
     def loadmodels(self):
         #arrows & cards
         arr_up = render.attachNewNode("main arrow up"); arr_up.setHpr(0,90,0); arr_up.setPos(6.2,1.5,7.3); arr_up.hide()
@@ -340,10 +339,6 @@ class mainScene(FSM,DirectObject):
         self.dic_anims["cam_move_launch"] = Parallel(name="launch the game")
         self.dic_anims["cam_move_launch"].append(camera.posInterval(4,Point3(0,-62,12)))
         self.dic_anims["cam_move_launch"].append(camera.hprInterval(2,Point3(0,-10,0)))
-        #
-        # TODO : suite des animations à charger
-        #
-        #
     def mouseTask(self,task):
         if base.mouseWatcherNode.hasMouse():
             mpos = base.mouseWatcherNode.getMouse()
@@ -596,7 +591,7 @@ class mainScene(FSM,DirectObject):
                         if elt["name"] == name:
                             self.dic_gui["camp_menu"]["used_name"].show(); return
                 dte = time.strftime("%d-%m-%Y_%H%M%S",time.localtime())
-                sav = {"name":name,"crea_date":dte,"time":0,"saved_place":"firstbase","init":True}
+                sav = {"name":name,"crea_date":dte,"time":0,"saved_place":"firstbase","init":0}
                 fsav = open("arcns_saves/"+dte+".sav","w"); fsav.write(json.dumps(sav)); fsav.close()
             else: sav = self.states["saves_lst"][self.states["camp_sel"]-1]
             self.dic_arrows["arrow_camp_up"]["node"].hide(); self.dic_arrows["arrow_camp_dn"]["node"].hide()

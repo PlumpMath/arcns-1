@@ -21,13 +21,12 @@ class gameScene(FSM,DirectObject):
         self.giroscope = render.attachNewNode("giroscope"); self.giroscope.setPos(0,0,0); self.giroscope.setHpr(0,0,0)
         self.giroHpr = [0,0,0]; self.giroPos = [0,0,0]; camera.reparentTo(self.giroscope); camera.setPos(0,-34,25); camera.lookAt(0,0,0)
         #
+        self.camMove = {"strapCam":[0,0,0],"rotCam":[0,0,0]}
+        #
+        #
         # DEBUG : test du passage de la scène et du display
         self.accept("a",self.returnMainMenu)
         self.accept("escape",sys.exit,[0])
-        #
-        self.accept("arrow_left",self.rotate_giro,[1])
-        self.accept("arrow_right",self.rotate_giro,[-1])
-        #
         ###
         #
         self.dic_gui = {"wait_visual":{},"main_visual":{},"tuto_visual":{},"base_visual":{},"explore_visual":{}}
@@ -43,10 +42,6 @@ class gameScene(FSM,DirectObject):
     # DEBUG : retour au menu principal (méthode de test)
     def returnMainMenu(self):
         taskMgr.add(self.app.main_screen,"return to main menu")
-    ###
-    # DEBUG : rotation du giroscope (méthode de test)
-    def rotate_giro(self,sens):
-        self.giroHpr[0] += 15*sens; self.giroscope.setHpr(self.giroHpr[0],self.giroHpr[1],self.giroHpr[2])
     ###
     def loadSfx(self):
         #
@@ -73,7 +68,7 @@ class gameScene(FSM,DirectObject):
         #
         # TODO : barre de boutons pour quitter, les options, l'aide, etc
         #
-        tmp_gui = self.app.arcButton(self.app.speak["main_visual"]["quit"],(-0.6,0,0.95),None,0.06,TextNode.ACenter)
+        tmp_gui = self.app.arcButton(self.app.speak["main_visual"]["quit"],(-0.75,0,0.95),None,0.06,TextNode.ACenter)
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"]["quit"] = tmp_gui
         #
         #
@@ -85,8 +80,8 @@ class gameScene(FSM,DirectObject):
         tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"]["option"] = tmp_gui
         #
         #
-        #tmp_gui = self.app.arcButton(self.app.speak["main_visual"][""],(-0.5,0,0.95),None,0.06,TextNode.ACenter)
-        #tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"][""] = tmp_gui
+        tmp_gui = self.app.arcButton(self.app.speak["main_visual"]["help"],(0.75,0,0.95),None,0.06,TextNode.ACenter)
+        tmp_gui.reparentTo(tmp_frame); tmp_gui["state"] = DGG.DISABLED; self.dic_gui["main_visual"]["help"] = tmp_gui
         #
         #
         #frame "tutoriel"
@@ -128,19 +123,44 @@ class gameScene(FSM,DirectObject):
         # TODO : chargement des animations
         #
         #
+    def mouseTask(self,task):
+        if base.mouseWatcherNode.hasMouse():
+            mpos = base.mouseWatcherNode.getMouse()
+            #
+            # TODO : capture de la souris
+            #
+            #
+        return task.cont
     """ ****************************
     méthodes pour contrôler la caméra
     **************************** """
     def activeCamControl(self):
+        self.accept("arrow_left",self.captureCamControl,["strap","left","down"])
+        self.accept("arrow_left-up",self.captureCamControl,["strap","left","up"])
+        self.accept("arrow_right",self.captureCamControl,["strap","right","down"])
+        self.accept("arrow_right-up",self.captureCamControl,["strap","right","up"])
+        self.accept("shift",self.captureCamControl,["rot","down"]); self.accept("shift-up",self.captureCamControl,["rot","up"])
         #
         # TODO : activation des contrôles de la caméra
         #
+        #
+        #
         pass
-    def moveCam(self):
+    def captureCamControl(self,cmd1,cmd2=None,cmd3=None):
+        #
+        # TODO : capture des contrôles de la caméra
+        #
+        print cmd1
+        print cmd2
+        print cmd3
+        #
+        pass
+    def moveCam(self,task):
         #
         # TODO : gestion des contrôles de la caméra
         #
-        pass
+        #
+        return task.cont
     """ ****************************
     méthodes pour l'état "Init"
     **************************** """
@@ -159,10 +179,11 @@ class gameScene(FSM,DirectObject):
     méthodes pour l'état "Base"
     **************************** """
     def enterBase(self):
+    	self.app.change_cursor("main"); self.dic_gui["main_visual"]["frame"].show()
     	#
     	# TODO : etat pour afficher une base (enterBase)
     	#
-    	self.app.change_cursor("main"); self.dic_gui["main_visual"]["frame"].show()
+    	self.activeCamControl()
     	#
     	#
     def exitBase(self):

@@ -7,7 +7,9 @@ fr_lang = {
     },
     "main_visual":{
         "quit":"Quitter",
-        "option":"Options"
+        #
+        "option":"Options",
+        "help":"Aide"
     },
     "tuto_visual":{
     },

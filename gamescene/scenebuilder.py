@@ -32,7 +32,7 @@ gamescene_builder["firstbase"] = {
         "spawners":{}
     },
     "lights":[
-        [1,(0,0,0),(0,-10,0),True,camera,"gates_light"]
+        [1,(0.8,0.8,0.8,1),(0,0,0),(0,-10,0),True,camera,"gates_light"]
         #[(0,0,0),0,0,0]
     ]
 }

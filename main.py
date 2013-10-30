@@ -90,7 +90,7 @@ class ArcnsApp(DirectObject):
                         self.dic_gui[key]["command"] = None; break
                 self.dic_gui[key].removeNode()
             from arcstools.arcstools import arcsTools
-            self.arcstools = arcsTools()
+            self.arcstools = arcsTools(self)
             self.arrow_mod = loader.loadModel("mainscene/models/statics/arrow.bam")
             self.card_arrow = CardMaker("arrow_hide"); self.card_arrow.setFrame(-1.1,1,-0.8,0.8); self.card_arrow.setColor(1,0,0,1)
             from mainscene.mainscene import mainScene

@@ -2,14 +2,13 @@
 
 from panda3d.core import DirectionalLight, Spotlight, PerspectiveLens, Vec4
 from direct.stdpy.file import *
+from direct.gui.DirectGui import DirectFrame, DGG
 
 import json
 
 class arcsTools:
-    def __init__(self):
-        self.dir_light = DirectionalLight("dir_light"); self.dir_light.setColor(Vec4(0.8,0.8,0.8,1))
-        self.spot_light = Spotlight("spotlight"); self.spot_light.setColor(Vec4(0.8,0.8,0.8,1))
-        lens = PerspectiveLens(); self.spot_light.setLens(lens)
+    def __init__(self,app):
+        self.app = app
         #
         # TODO : création des dictionnaires, pour éviter le chargement multiple
         #
@@ -81,14 +80,16 @@ class arcsTools:
         for lght in tmp_lights:
             tmp_lght = None
             if lght[0] == 0:
-                tmp_lght = render.attachNewNode(self.spot_light)
-                tmp_lght.lookAt(lght[2][0],lght[2][1],lght[2][2]); tmp_lght.setPos(lght[1][0],lght[1][1],lght[1][2])
+                spot_light = Spotlight("spotlight"); spot_light.setColor(Vec4(lght[1][0],lght[1][1],lght[1][2],lght[1][3]))
+                lens = PerspectiveLens(); spot_light.setLens(lens); tmp_lght = render.attachNewNode(spot_light)
+                tmp_lght.lookAt(lght[3][0],lght[3][1],lght[3][2]); tmp_lght.setPos(lght[2][0],lght[2][1],lght[2][2])
             elif lght[0] == 1:
-                tmp_lght = render.attachNewNode(self.dir_light); tmp_lght.setHpr(lght[2][0],lght[2][1],lght[2][2])
-            if lght[3]:
-                if lght[4] != None: lght[4].setLight(tmp_lght)
+                dir_light = DirectionalLight("dir_light"); dir_light.setColor(Vec4(lght[1][0],lght[1][1],lght[1][2],lght[1][3]))
+                tmp_lght = render.attachNewNode(dir_light); tmp_lght.setHpr(lght[3][0],lght[3][1],lght[3][2])
+            if lght[4]:
+                if lght[5] != None: lght[5].setLight(tmp_lght)
                 else: render.setLight(tmp_lght)
-            lst_lights[lght[5]] = tmp_lght
+            lst_lights[lght[6]] = tmp_lght
         #
         #
         #
@@ -99,4 +100,46 @@ class arcsTools:
         # TODO : fonction pour parser le fichier source d'un personnage
         #
         pass
+
+    def parse_gui(self,gui):
+        lst_gui = {}
+        for key1 in gui:
+            lst_gui[key1] = {}
+            for key2 in gui[key1]:
+                lst_gui[key1][key2] = DirectFrame()
+                if gui[key1][key2]["parent"] != None: lst_gui[key1][key2].reparentTo(gui[key1][key2]["parent"])
+                if gui[key1][key2]["hide"]: lst_gui[key1][key2].hide()
+                for elt in gui[key1][key2]["elts"]:
+                    tmp = gui[key1][key2]["elts"][elt]; tmp_gui = None
+                    if tmp["type"] == "button":
+                        tmp_text = (tmp["text"] if tmp.has_key("text") else self.app.speak[key1][elt])
+                        tmp_gui = self.app.arcButton(tmp_text,tmp["pos"],tmp["cmd"],tmp["scale"],tmp["algn"],tmp["extra"],tmp["sound"])
+                        if tmp.has_key("disabled") and not tmp["disabled"]: pass
+                        else: tmp_gui["state"] = DGG.DISABLED
+                    elif tmp["type"] == "label":
+                        tmp_text = (tmp["text"] if tmp.has_key("text") else self.app.speak[key1][elt])
+                        tmp_gui = self.app.arcLabel(tmp_text,tmp["pos"],tmp["scale"],tmp["algn"])
+                    elif tmp["type"] == "radio":
+                        for sub in tmp["elts"]:
+                            sub.append(sub[0]); sub[0] = self.app.speak[key1][sub[0]]
+                        self.app.arcRadioButton(tmp["elts"],lst_gui[key1][key2],lst_gui[key1],tmp["scale"],tmp["algn"])
+                        continue
+                    elif tmp["type"] == "optmenu":
+                        tmp_text = (tmp["text"] if tmp.has_key("text") else self.app.speak[key1][elt])
+                        tmp_gui = self.app.arcOptMenu(tmp_text,tmp["pos"],tmp["items"],tmp["init"],tmp["cmd"],tmp["scale"],tmp["change"],tmp["algn"],tmp["extra"])
+                    elif tmp["type"] == "checkbox":
+                        tmp_gui = self.app.arcCheckButton(self.app.speak[key1][elt],tmp["pos"],tmp["cmd"],tmp["val"],tmp["scale"],tmp["box"],tmp["algn"],tmp["extra"])
+                    elif tmp["type"] == "slider":
+                        tmp_gui = self.app.arcSlider(tmp["pos"],tmp["scale"],tmp["inter"],tmp["init"],tmp["pas"],tmp["cmd"],tmp["extra"],tmp["orient"])
+                    elif tmp["type"] == "waitbar":
+                        #
+                        tmp_text = (tmp["text"] if tmp.has_key("text") else self.app.speak[key1][elt])
+                        tmp_gui = self.app.arcWaitBar(tmp["pos"],tmp["scale"],tmp["range"],tmp["val"],tmp_text)
+                        #
+                        #
+                    #
+                    #
+                    tmp_gui.reparentTo(lst_gui[key1][key2]); lst_gui[key1][elt] = tmp_gui
+                    if tmp["hide"]: tmp_gui.hide()
+        return lst_gui
 
